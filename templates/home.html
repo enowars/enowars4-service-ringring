@@ -98,7 +98,7 @@
       <div>
         <div id="chatbox">
           <p class="botText">
-            <span>Hello, this is the reception. How can I help you?</span>
+            <span>Hello, this is the reception. What can I do for you?</span>
           </p>
         </div>
         <div id="userInput">
@@ -106,6 +106,7 @@
         </div>
       </div>
       <script>
+        var status = ''
         function getBotResponse() {
           var rawText = $("#textInput").val();
           var userHtml = '<p class="userText"><span>' + rawText + "</span></p>";
@@ -114,8 +115,9 @@
           document
             .getElementById("userInput")
             .scrollIntoView({ block: "start", behavior: "smooth" });
-          $.get("/get", { msg: rawText }).done(function(data) {
-            var botHtml = '<p class="botText"><span>' + data + "</span></p>";
+          $.get("/get_bot_response", { msg: rawText , state: status}).done(function(data) {
+            var botHtml = '<p class="botText"><span>' + data.response + "</span></p>";
+            status = data.state;
             $("#chatbox").append(botHtml);
             document
               .getElementById("userInput")
