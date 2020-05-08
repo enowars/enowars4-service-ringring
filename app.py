@@ -10,6 +10,7 @@ logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
 logger.addHandler(handler)
 
+
 @app.route("/")
 def home():
     return render_template("home.html")
@@ -45,7 +46,7 @@ def set_alarm(user_text, state):
             logger.info(f'Set alarm with time: {alarm_time}')
             return {'response': f"alarm time set to {alarm_time.strftime('%H:%M')}.",
                     'state': ''}
-        except:
+        except ValueError:
             return {'response': "This was not a valid input. Try again.",
                     'state': 'alarm'}
     else:
@@ -55,4 +56,3 @@ def set_alarm(user_text, state):
 
 if __name__ == "__main__":
     app.run()
-
