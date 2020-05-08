@@ -36,7 +36,7 @@ def get_bot_response():
 
 @app.route("/alarm")
 def alarm():
-    # TODO: add alarm overview page (potentially just a dead end)
+    # TODO: add alarm overview page (potentially just a dead end) bla
 
 
 def set_alarm(user_text, state):
