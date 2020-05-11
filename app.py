@@ -19,7 +19,7 @@ def home():
 @app.route("/get_bot_response")
 @debug(logger=logger, _debug=False)
 def get_bot_response():
-    user_text = request.a_debugrgs.get('msg')
+    user_text = request.args.get('msg')
     state = request.args.get('state')
     if (state and state == 'alarm') or (re.search('alarm', user_text)):
         return set_alarm(user_text, state)
