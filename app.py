@@ -5,7 +5,8 @@ import logging
 from utils import debug
 import json
 import uuid
-
+from flask_table import Table, Col
+import db_helper
 
 app = Flask(__name__)
 
@@ -47,8 +48,15 @@ def get_bot_response():
 
 @app.route("/alarm")
 def alarm():
+    class ItemTable(Table):
+        time = Col('time')
+        text = Col('text')
+
     # TODO: add alarm overview page (potentially just a dead end)
-    pass
+    items = db_helper.get_alarms(request.cookies.get('session_id'))
+    table = ItemTable(items)
+
+    return render_template("alarm.html", alarms_table = table)
 
 
 @debug(logger=logger, _debug=False)
@@ -69,6 +77,7 @@ def set_alarm(user_text, state):
         alarm_time = state['alarm_time']
         try:
             logger.debug(f'Set alarm text to: {user_text}')
+            db_helper.insert_alarm(request.cookies.get('session_id'), alarm_time, user_text)
             return {'response': f"Alarm text set to {user_text}.", 'state': {'mode': 'main_menu'}}
         except ValueError:
             return {'response': "This was not a valid input. Try again.",
