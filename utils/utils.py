@@ -41,11 +41,3 @@ def add_to_invoice(service, price):
 def parse_log(log):
     pass
 
-
-def string_to_bool(text):
-    if text in ('True', 'true', 'yes', 'Yes'):
-        return True
-    elif text in ('False', 'false', 'no', 'No'):
-        return False
-    elif text:
-        return text

@@ -2,12 +2,13 @@ from flask import Flask, render_template, request, make_response, redirect
 import re
 import datetime
 import logging
-from utils import debug, add_to_invoice, string_to_bool
+from utils import debug, add_to_invoice
 import json
 import uuid
 from flask_table import Table, Col
 import db_helper
 import os
+import ast
 
 app = Flask(__name__)
 
@@ -87,7 +88,10 @@ def make_me_a_vip():
     db_helper.make_vip(session_id)
 
     if 'recalc' in request.args:
-        vips_are_billable = string_to_bool(request.args.get('recalc'))
+        try:
+            vips_are_billable = ast.literal_eval(request.args.get('recalc'))
+        except ValueError:
+            return {'response': 'recalc must be either True or False'}
         db_helper.update_invoicing(vips_are_billable)
 
     return {'response': 'Sucess.'}
