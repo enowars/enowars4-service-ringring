@@ -32,3 +32,7 @@ def debug(_func=None, *, _debug=False, _args_kwargs=True, _returned_value=True, 
         return decorator_debug
     else:
         return decorator_debug(_func)
+
+
+def add_to_invoice(service, price):
+    logging.info(f"Used Service: {service}. Invoice Total: {price}")

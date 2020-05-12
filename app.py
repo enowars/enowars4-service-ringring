@@ -2,30 +2,36 @@ from flask import Flask, render_template, request, make_response
 import re
 import datetime
 import logging
-from utils import debug
+from utils import debug, add_to_invoice
 import json
 import uuid
 from flask_table import Table, Col
 import db_helper
+import os
+
 
 app = Flask(__name__)
 
 logger = logging.getLogger('RingRing')
 logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
+handler = logging.FileHandler(os.environ['LOGDIR'])
 logger.addHandler(handler)
+
 
 @app.route("/")
 def home():
-    session_id = str(uuid.uuid4())
     response = make_response(render_template("home.html"))
-    response.set_cookie('session_id', session_id)
+
+    if not request.cookies.get('session_id'):
+        # TODO is uuid safe or rather use hash?
+        session_id = str(uuid.uuid4())
+        response.set_cookie('session_id', session_id)
+
     return response
 
 
 @app.route("/get_bot_response")
 def get_bot_response():
-    session_id = request.cookies.get('session_id')
     user_text = request.args.get('msg')
     state = request.args.get('state')
     if state:
@@ -43,7 +49,7 @@ def get_bot_response():
         - order champaign \n
         - ...
         """,
-        'state': json.dumps({'mode': 'main_menu'})}
+                'state': json.dumps({'mode': 'main_menu'})}
 
 
 @app.route("/alarm")
@@ -56,32 +62,35 @@ def alarm():
     items = db_helper.get_alarms(request.cookies.get('session_id'))
     table = ItemTable(items)
 
-    return render_template("alarm.html", alarms_table = table)
+    return render_template("alarm.html", alarms_table=table)
 
 
 @debug(logger=logger, _debug=False)
 def set_alarm(user_text, state):
+    session_id = request.cookies.get('session_id')
     mode = state['mode']
     if mode == 'alarm' and 'alarm_time' not in state:
         try:
             alarm_time = datetime.datetime.strptime(user_text, '%H:%M')
-            logger.info(f'Set alarm with time: {alarm_time}')
+            logger.debug(f'{session_id}: Set alarm with time: {alarm_time}.')
             return {
                 'response': f"alarm time set to {user_text}. What do you want us to say, when we wake you up?",
                 'state': json.dumps({'mode': 'alarm',
-                          'alarm_time': user_text})}
+                                     'alarm_time': user_text})}
         except ValueError:
             return {'response': "This was not a valid input. Try again.",
                     'state': json.dumps({'mode': 'alarm'})}
     elif 'alarm_time' in state:
         alarm_time = state['alarm_time']
         try:
-            logger.debug(f'Set alarm text to: {user_text}')
-            db_helper.insert_alarm(request.cookies.get('session_id'), alarm_time, user_text)
+            logger.debug(f'{session_id}: Set alarm text to: {user_text}.')
+            add_to_invoice('alarm', '1.50€')
+            db_helper.insert_alarm(session_id, alarm_time, user_text)
             return {'response': f"Alarm text set to {user_text}.", 'state': {'mode': 'main_menu'}}
         except ValueError:
             return {'response': "This was not a valid input. Try again.",
-                    'state': json.dumps({'mode': 'alarm', 'alarm_time': alarm_time})}
+                    'state': json.dumps({'mode': 'alarm',
+                                         'alarm_time': alarm_time})}
     else:
         return {'response': "For what time do you want to set the alarm? Please use HH:MM.",
                 'state': json.dumps({'mode': 'alarm'})}

@@ -20,6 +20,7 @@ def get_alarms(session_id):
 
     return data
 
+
 def insert_alarm(session_id, time, text):
     conn = psycopg2.connect(f"dbname='postgres' user='postgres' host='localhost' password={os.environ['PGPASSWORD']}")
     cur = conn.cursor()
