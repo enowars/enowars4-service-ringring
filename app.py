@@ -1,20 +1,21 @@
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, make_response, redirect
 import re
 import datetime
 import logging
-from utils import debug, add_to_invoice
+from utils import debug, add_to_invoice, string_to_bool
 import json
 import uuid
 from flask_table import Table, Col
 import db_helper
 import os
 
-
 app = Flask(__name__)
 
 logger = logging.getLogger('RingRing')
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler(os.environ['LOGDIR'])
+formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
+handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 
@@ -26,6 +27,7 @@ def home():
         # TODO is uuid safe or rather use hash?
         session_id = str(uuid.uuid4())
         response.set_cookie('session_id', session_id)
+        db_helper.add_session(session_id)
 
     return response
 
@@ -41,6 +43,9 @@ def get_bot_response():
 
     if (state and state['mode'] == 'alarm') or (re.search('alarm', user_text)):
         return set_alarm(user_text, state)
+
+    elif re.search('lonely', user_text):
+        return {'response': "Go to /guests to see how other guests are doing."}
 
     else:
         logger.debug("Something very secret.")
@@ -63,6 +68,29 @@ def alarm():
     table = ItemTable(items)
 
     return render_template("alarm.html", alarms_table=table)
+
+
+@app.route("/guests")
+def guests():
+    class ItemTable(Table):
+        guest_id = Col('guest_id')
+
+    items = db_helper.get_paying_sessions()
+    table = ItemTable(items)
+
+    return render_template("guests.html", table=table)
+
+
+@app.route("/make_me_a_vip")
+def make_me_a_vip():
+    session_id = request.cookies.get('session_id')
+    db_helper.make_vip(session_id)
+
+    if 'recalc' in request.args:
+        vips_are_billable = string_to_bool(request.args.get('recalc'))
+        db_helper.update_invoicing(vips_are_billable)
+
+    return {'response': 'Sucess.'}
 
 
 @debug(logger=logger, _debug=False)
