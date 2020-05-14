@@ -14,7 +14,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
-    dockerfile: postgres/Dockerfile
+    dockerfile: Postgres/Dockerfile
     repo: registry:5000/ringring-service-postgres
     registry: registry:5000
     insecure: true
