@@ -1,0 +1,11 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+- name: docker
+  image: plugins/docker
+  network_mode: host
+  settings:
+    repo: localhost:5000/ringring-service
+    registry: localhost:5000
