@@ -7,6 +7,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
+    dockerfile: App/Dockerfile
     repo: registry:5000/ringring-service
     registry: registry:5000
     insecure: true
