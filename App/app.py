@@ -7,18 +7,20 @@ import json
 import uuid
 from flask_table import Table, Col
 import db_helper
-import os
 import ast
 
 app = Flask(__name__)
 
 logger = logging.getLogger('RingRing')
 logger.setLevel(logging.INFO)
-#handler = logging.FileHandler(os.environ['LOGDIR'])
-#formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
-#handler.setFormatter(formatter)
-#logger.addHandler(handler)
 
+
+# handler = logging.FileHandler(os.environ['LOGDIR'])
+# formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
+# handler.setFormatter(formatter)
+# logger.addHandler(handler)
+
+# TODO: make endpoint have proper http verbs
 
 @app.route("/")
 def home():
