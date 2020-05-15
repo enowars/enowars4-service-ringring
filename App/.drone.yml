@@ -3,9 +3,26 @@ type: docker
 name: default
 
 steps:
-- name: docker
+- name: publish-docker
   image: plugins/docker
-  network_mode: host
+  network_mode: registry-network
   settings:
-    repo: localhost:5000/ringring-service
-    registry: localhost:5000
+    repo: registry:5000/ringring-service
+    registry: registry:5000
+    insecure: true
+- name: publish-docker-postgres
+  image: plugins/docker
+  network_mode: registry-network
+  settings:
+    dockerfile: Postgres/Dockerfile
+    repo: registry:5000/ringring-service-postgres
+    registry: registry:5000
+    insecure: true
+- name: trigger-vm-image-creation
+  image: plugins/downstream
+  settings:
+    server: http://droneci.sect.tu-berlin.de
+    token: c4861f4fdf10715f87f45b939a442878
+    fork: true
+    repositories:
+      - FlorianNachtigall/drone-testing
