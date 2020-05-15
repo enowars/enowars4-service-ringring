@@ -9,6 +9,8 @@ verify_ssl = true
 flask = "*"
 flask-table = "*"
 psycopg2-binary = "*"
+aiohttp = "*"
+enochecker = "*"
 
 [requires]
 python_version = "3.8"
