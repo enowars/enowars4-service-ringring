@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, make_response, redirect
+from flask import Flask, render_template, request, make_response
 import re
 import datetime
 import logging
@@ -14,10 +14,10 @@ app = Flask(__name__)
 
 logger = logging.getLogger('RingRing')
 logger.setLevel(logging.INFO)
-handler = logging.FileHandler(os.environ['LOGDIR'])
-formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
+#handler = logging.FileHandler(os.environ['LOGDIR'])
+#formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
+#handler.setFormatter(formatter)
+#logger.addHandler(handler)
 
 
 @app.route("/")

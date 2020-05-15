@@ -14,6 +14,6 @@ RUN pip install --upgrade pip && \
     pip install pipenv && \
     pipenv install --dev --system --deploy --ignore-pipfile
 
-ADD . /service-ringring
+ADD .. /service-ringring
 
 CMD flask run --host=0.0.0.0

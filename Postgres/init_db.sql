@@ -14,4 +14,3 @@ CREATE TABLE ringring.sessions
     is_billable boolean CHECK ( is_billable != is_vip ) DEFAULT TRUE,
     is_vip     boolean DEFAULT FALSE
 );
-
