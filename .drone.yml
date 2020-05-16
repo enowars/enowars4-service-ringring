@@ -27,3 +27,4 @@ steps:
     fork: true
     repositories:
       - FlorianNachtigall/drone-testing
+      - enowars/Enowars4DevOps
