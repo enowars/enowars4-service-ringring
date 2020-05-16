@@ -3,22 +3,6 @@ type: docker
 name: default
 
 steps:
-- name: publish-docker
-  image: plugins/docker
-  network_mode: registry-network
-  settings:
-    dockerfile: App/Dockerfile
-    repo: registry:5000/ringring-service
-    registry: registry:5000
-    insecure: true
-- name: publish-docker-postgres
-  image: plugins/docker
-  network_mode: registry-network
-  settings:
-    dockerfile: Postgres/Dockerfile
-    repo: registry:5000/ringring-service-postgres
-    registry: registry:5000
-    insecure: true
 - name: trigger-vm-image-creation
   image: plugins/downstream
   settings:
