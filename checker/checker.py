@@ -1,6 +1,5 @@
 import enochecker
 import random
-import aiohttp
 import json
 from requests import exceptions
 
@@ -19,42 +18,39 @@ class RingRingChecker(enochecker.BaseChecker):
 
     def putflag(self):
         self.logger.debug("Putting Flag...")
-        async with aiohttp.ClientSession(raise_for_status=True) as session:
-            # / because why not
-            # make sure the session is a vip
-            try:
-                response = self.http_get(route='/')
-                session_id = response.cookies.get('session_id')
+        try:
+            response = self.http_get(route='/')
+            session_id = response.cookies.get('session_id')
 
-                self.logger.debug("Service main page is reachable.")
-            except exceptions.RequestException:
-                self.logger.debug("Service not reachable.")
-                raise enochecker.OfflineException()
+            self.logger.debug("Service main page is reachable.")
+        except exceptions.RequestException:
+            self.logger.debug("Service not reachable.")
+            raise enochecker.OfflineException()
 
-            enochecker.assert_equals(200, response.status_code, "Service not reachable")
+        enochecker.assert_equals(200, response.status_code, "Service not reachable")
 
-            try:
-                self.http_get(route="/make_me_a_vip")
-                self.logger.debug("Session is now a vip.")
-            except Exception:
-                self.logger.debug("Cannot make the session a vip.")
-                raise enochecker.BrokenServiceException()
+        try:
+            self.http_get(route="/make_me_a_vip")
+            self.logger.debug("Session is now a vip.")
+        except Exception:
+            self.logger.debug("Cannot make the session a vip.")
+            raise enochecker.BrokenServiceException()
 
-            # set alarm with flag as text
-            payload = {'state': json.dumps(
-                {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}"}),
-                'msg': self.flag}
+        # set alarm with flag as text
+        payload = {'state': json.dumps(
+            {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}"}),
+            'msg': self.flag}
 
-            try:
-                response = self.http_get("/get_bot_response", params=payload)
-            except exceptions.RequestException:
-                self.logger.debug(f"Could not place flag. \nFlag: {self.}. \nPayload: {payload}")
-                raise enochecker.BrokenServiceException("/AddAttack failed")
+        try:
+            response = self.http_get("/get_bot_response", params=payload)
+        except exceptions.RequestException:
+            self.logger.debug(f"Could not place flag. \nFlag: {self.}. \nPayload: {payload}")
+            raise enochecker.BrokenServiceException("/AddAttack failed")
 
-            enochecker.assert_in(self.flag, response.text,
-                                 "Could not place flag. \nFlag: {self.}. \nPayload: {payload}")
-            self.logger.debug("Flag {} up.".format(self.flag))
-            self.team_db[self.flag] = (session_id,)
+        enochecker.assert_in(self.flag, response.text,
+                             "Could not place flag. \nFlag: {self.}. \nPayload: {payload}")
+        self.logger.debug("Flag {} up.".format(self.flag))
+        self.team_db[self.flag] = (session_id,)
 
     def getflag(self):
         pass
@@ -70,5 +66,3 @@ class RingRingChecker(enochecker.BaseChecker):
 
 
 app = RingRingChecker.service
-
-enochecker_async.create_app(RingRingChecker())  # mongodb://mongodb:27017
