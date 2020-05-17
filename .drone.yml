@@ -23,7 +23,8 @@ steps:
   image: plugins/downstream
   settings:
     server: https://droneci.sect.tu-berlin.de
-    token: c4861f4fdf10715f87f45b939a442878
+    token:
+      from_secret: trigger_token
     fork: true
     repositories:
       - FlorianNachtigall/drone-testing
