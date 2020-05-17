@@ -8,12 +8,18 @@ ENV FLASK_APP "app.py"
 RUN mkdir /service-ringring
 WORKDIR /service-ringring
 
-COPY Pip* /service-ringring/
+#COPY Pip* /service-ringring/
+
+ADD . /service-ringring
 
 RUN pip install --upgrade pip && \
-    pip install pipenv && \
-    pipenv install --dev --system --deploy --ignore-pipfile
+    pip install -r /service-ringring/requirements.txt
+#    pip install pipenv && \
+#    pipenv install -r /service-ringring/requirements.txt
+#    pipenv install --dev --system --deploy --ignore-pipfile
 
-ADD .. /service-ringring
 
-CMD flask run --host=0.0.0.0
+#CMD flask run --host=0.0.0.0 --port=7353
+CMD ["python", "app.py"]
+
+EXPOSE 7353

@@ -3,7 +3,7 @@ import os
 from psycopg2 import sql
 # TODO Add try except around all db handlers
 
-CONNECTION_STRING = f"dbname='service' user='ringring' host='localhost' password={os.environ['PGPASSWORD']}"
+CONNECTION_STRING = f"dbname='service' user='ringring' host='{os.environ['PGHOST']}' password={os.environ['PGPASSWORD']}"
 
 
 def get_alarms(session_id):

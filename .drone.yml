@@ -7,6 +7,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
+    dockerfile: App/Dockerfile
     repo: registry:5000/ringring-service
     registry: registry:5000
     insecure: true
@@ -21,8 +22,17 @@ steps:
 - name: trigger-vm-image-creation
   image: plugins/downstream
   settings:
-    server: http://droneci.sect.tu-berlin.de
-    token: c4861f4fdf10715f87f45b939a442878
+    server: https://droneci.sect.tu-berlin.de
+    token:
+      from_secret: trigger_token
     fork: true
     repositories:
       - FlorianNachtigall/drone-testing
+      - enowars/Enowars4DevOps
+
+trigger:
+  branch:
+  - master
+  - test
+  event:
+  - push
