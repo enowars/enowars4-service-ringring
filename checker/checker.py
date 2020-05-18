@@ -1,3 +1,5 @@
+from abc import ABC
+
 import enochecker
 import random
 import json
@@ -8,7 +10,7 @@ class RingRingChecker(enochecker.BaseChecker):
     port = 8000
 
     def __init__(self):
-        super()
+        super().__init__()
         # TODO: only one flag for now, need to add noise and havocs
         port = 8003
         flag_count = 1
@@ -44,7 +46,7 @@ class RingRingChecker(enochecker.BaseChecker):
         try:
             response = self.http_get("/get_bot_response", params=payload)
         except exceptions.RequestException:
-            self.logger.debug(f"Could not place flag. \nFlag: {self.}. \nPayload: {payload}")
+            self.logger.debug(f"Could not place flag. \nFlag: {self.flag}. \nPayload: {payload}")
             raise enochecker.BrokenServiceException("/AddAttack failed")
 
         enochecker.assert_in(self.flag, response.text,
@@ -53,7 +55,14 @@ class RingRingChecker(enochecker.BaseChecker):
         self.team_db[self.flag] = (session_id,)
 
     def getflag(self):
-        pass
+        try:
+            (session_id, ) = self.team_db[self.flag]
+        except KeyError:
+            return enochecker.Result.MUMBLE
+        cookies = {'session_id': session_id[0]}
+        req = self.http_get("/alarm", cookies=cookies)
+        enochecker.assert_equals(200, req.status_code, "Alarm page is down.")
+        enochecker.assert_equals(self.flag, req.text, "Flas is missing!")
 
     def putnoise(self):
         pass
@@ -64,5 +73,11 @@ class RingRingChecker(enochecker.BaseChecker):
     def havoc(self):
         pass
 
+    def exploit(self):
+        pass
+    
 
 app = RingRingChecker.service
+
+if __name__ == "__main__":
+    enochecker.run(RingRingChecker)
