@@ -1,9 +1,8 @@
-from abc import ABC
-
 import enochecker
 import random
 import json
 from requests import exceptions
+import string
 
 
 class RingRingChecker(enochecker.BaseChecker):
@@ -40,8 +39,8 @@ class RingRingChecker(enochecker.BaseChecker):
 
         # set alarm with flag as text
         payload = {'state': json.dumps(
-            {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}"}),
-            'msg': self.flag}
+            {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}",
+             'msg': self.flag})}
 
         try:
             response = self.http_get("/get_bot_response", params=payload)
@@ -56,7 +55,7 @@ class RingRingChecker(enochecker.BaseChecker):
 
     def getflag(self):
         try:
-            (session_id, ) = self.team_db[self.flag]
+            (session_id,) = self.team_db[self.flag]
         except KeyError:
             return enochecker.Result.MUMBLE
         cookies = {'session_id': session_id[0]}
@@ -65,7 +64,40 @@ class RingRingChecker(enochecker.BaseChecker):
         enochecker.assert_equals(self.flag, req.text, "Flas is missing!")
 
     def putnoise(self):
-        pass
+        self.logger.debug("Putting Noise...")
+        try:
+            response = self.http_get(route='/')
+            session_id = response.cookies.get('session_id')
+
+            self.logger.debug("Service main page is reachable.")
+        except exceptions.RequestException:
+            self.logger.debug("Service not reachable.")
+            raise enochecker.OfflineException()
+
+        enochecker.assert_equals(200, response.status_code, "Service not reachable")
+
+        try:
+            assert session_id
+        except AssertionError:
+            raise enochecker.BrokenServiceException("session_id is not set.")
+
+        alarm_message = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(50)])
+        payload = {'state': json.dumps(
+            {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}",
+             'msg': alarm_message})}
+
+        try:
+            response = self.http_get("/get_bot_response", params=payload)
+        except exceptions.RequestException:
+            self.logger.debug(f"Could not place flag. \nFlag: {self.flag}. \nPayload: {payload}")
+            raise enochecker.BrokenServiceException("/Put noise failed")
+
+        enochecker.assert_in(alarm_message, response.text,
+                             "Could not place flag. \nFlag: {self.}. \nPayload: {payload}")
+        self.logger.debug("Flag {} up.".format(self.flag))
+        # TODO: how to store the noise in the db?
+        # TODO: how many noise calls are made per tick?
+        # self.team_db[self.flag] = (session_id,)
 
     def getnoise(self):
         pass
@@ -75,7 +107,7 @@ class RingRingChecker(enochecker.BaseChecker):
 
     def exploit(self):
         pass
-    
+
 
 app = RingRingChecker.service
 
