@@ -18,10 +18,12 @@ docker run -d -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_USER=ringring -e
 docker run -d -e PGPASSWORD=mysecretpassword -e PGHOST=postgres -p 7353:7353 --name=$app $app
 
 echo -e "\e[32m\nSetting up container networking...\e[0m"
-docker network rm ring
+docker network rm ring 2> /dev/null || true
 docker network create ring
 docker network connect ring flask-ringring
 docker network connect ring postgres
 
-echo -e "\e[32m\nFlask app logs...\e[0m"
-docker logs --follow $app
+if [[ $1 = "-f" ]]; then
+    echo -e "\e[32m\nFlask app logs...\e[0m"
+    docker logs --follow $app
+fi
