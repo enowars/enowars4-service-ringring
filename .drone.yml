@@ -1,6 +1,7 @@
+---
 kind: pipeline
 type: docker
-name: default
+name: build
 
 steps:
 - name: publish-docker
@@ -19,6 +20,34 @@ steps:
     repo: registry:5000/ringring-service-postgres
     registry: registry:5000
     insecure: true
+
+trigger:
+  branch:
+  - master
+  - test
+  event:
+  - push
+
+---
+kind: pipeline
+type: docker
+name: test
+
+steps:
+- name: wait-for-services
+  image: docker:dind
+  volumes:
+  - name: dockersock
+    path: /var/run/docker.sock
+  commands:
+  - ./utils/wait-for-services.sh
+- name: integration-tests
+  image: python
+  environment:
+    SERVICE_HOST: ringring
+  commands:
+  - pip install --upgrade pip && pip install requests
+  - python ./integration-tests/run.py
 - name: trigger-vm-image-creation
   image: plugins/downstream
   settings:
@@ -30,9 +59,23 @@ steps:
       - FlorianNachtigall/drone-testing
       - enowars/Enowars4DevOps
 
-trigger:
-  branch:
-  - master
-  - test
-  event:
-  - push
+services:
+- name: ringring
+  image: localhost:5000/ringring-service
+  environment:
+    PGPASSWORD: mysecretpassword
+    PGHOST: postgres
+- name: postgres
+  image: localhost:5000/ringring-service-postgres
+  environment:
+    POSTGRES_PASSWORD: mysecretpassword
+    POSTGRES_USER: ringring
+    POSTGRES_DB: service
+
+volumes:
+- name: dockersock
+  host:
+    path: /var/run/docker.sock
+
+depends_on:
+- build
