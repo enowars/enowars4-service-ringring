@@ -1,0 +1,33 @@
+formatters:
+  simple:
+    format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  invoice:
+    format: '{{"invoice_number": "%(invoice_number)s", "item": "%(item)s", "name": "%(guest_name)s", "time": "%(asctime)s", "amount": "%(amount)s", "note": "%(note)s"}}'
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: simple
+    level: {level}
+    stream: ext://sys.stdout
+  file:
+    class: logging.FileHandler
+    filename: InvoiceApp/invoices/accounting.log
+    level: {level}
+    filters: [invoice_only]
+    mode: a
+    formatter: invoice
+filters:
+  invoice_only:
+    (): app.InvoiceFilter
+loggers:
+  invoice_controller:
+    handlers:
+    - console
+    - file
+    level: {level}
+    propagate: false
+root:
+  handlers:
+  - console
+  level: DEBUG
+version: 1
