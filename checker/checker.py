@@ -13,7 +13,7 @@ class RingRingChecker(enochecker.BaseChecker):
         # TODO: only one flag for now, need to add noise and havocs
         port = 8003
         flag_count = 1
-        noise_count = 0
+        noise_count = 10
         havoc_count = 0
         service_name = "ringring"
 
@@ -96,7 +96,6 @@ class RingRingChecker(enochecker.BaseChecker):
                              "Could not place flag. \nFlag: {self.}. \nPayload: {payload}")
         self.logger.debug("Flag {} up.".format(self.flag))
         # TODO: how to store the noise in the db?
-        # TODO: how many noise calls are made per tick?
         # self.team_db[self.flag] = (session_id,)
 
     def getnoise(self):
