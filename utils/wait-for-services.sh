@@ -4,8 +4,9 @@
 # However, for the tests it is required that all services are up & running
 echo -e "\e[32m\nEnsuring all services are running before starting tests...\e[0m"
 
-sleep 5
+sleep 2
 until [ "`docker inspect -f {{.State.Running}} $(docker ps --filter ancestor=localhost:5000/ringring-service -q)`"=="true" ]; do sleep 0.1; done;
+until [ "`docker inspect -f {{.State.Running}} $(docker ps --filter ancestor=localhost:5000/ringring-service-invoices -q)`"=="true" ]; do sleep 0.1; done;
 until [ "`docker inspect -f {{.State.Running}} $(docker ps --filter ancestor=localhost:5000/ringring-service-postgres -q)`"=="true" ]; do sleep 0.1; done;
 
 while [ 1 ]; do
@@ -14,6 +15,13 @@ while [ 1 ]; do
     sleep 1s;
 done;
 echo -e "\e[32m\nService up & running...\e[0m"
+
+while [ 1 ]; do
+    nc -vz invoices:7354
+    if [ $? = 0 ]; then break; fi;
+    sleep 1s;
+done;
+echo -e "\e[32m\nInvoice service up & running...\e[0m"
 
 while [ 1 ]; do
     nc -vz postgres:5432

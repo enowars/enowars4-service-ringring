@@ -12,6 +12,14 @@ steps:
     repo: registry:5000/ringring-service
     registry: registry:5000
     insecure: true
+- name: publish-docker-invoices
+  image: plugins/docker
+  network_mode: registry-network
+  settings:
+    dockerfile: InvoiceApp/Dockerfile
+    repo: registry:5000/ringring-service-invoices
+    registry: registry:5000
+    insecure: true
 - name: publish-docker-postgres
   image: plugins/docker
   network_mode: registry-network
@@ -44,10 +52,11 @@ steps:
 - name: integration-tests
   image: python
   environment:
-    SERVICE_HOST: ringring
+    SERVICE_HOST: invoices
+    TESTING_HOST: integration-tests
   commands:
-  - pip install --upgrade pip && pip install requests
-  - python ./integration-tests/run.py
+  - pip install --upgrade pip && pip install -r integration-tests/requirements.txt
+  - pytest --tb=short -l -m "not no_pipeline_support"
 - name: trigger-vm-image-creation
   image: plugins/downstream
   settings:
@@ -65,6 +74,8 @@ services:
   environment:
     PGPASSWORD: mysecretpassword
     PGHOST: postgres
+- name: invoices
+  image: localhost:5000/ringring-service-invoices
 - name: postgres
   image: localhost:5000/ringring-service-postgres
   environment:

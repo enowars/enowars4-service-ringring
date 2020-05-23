@@ -52,6 +52,7 @@ def test_bill_requesting():
     assert r.json()['total'] == 19.98
     assert len(r.json()['items']) == 2
 
+@pytest.mark.no_pipeline_support
 def test_setting_log_level():
     client = docker.from_env()
     container = client.containers.get('invoices')
@@ -66,6 +67,7 @@ def test_setting_log_level():
     assert 'INFO' in invoice_logs
     assert 'DEBUG' not in invoice_logs
 
+@pytest.mark.no_pipeline_support
 def test_invoice_log_accounting():
     client = docker.from_env()
     container = client.containers.get('invoices')
@@ -76,6 +78,7 @@ def test_invoice_log_accounting():
     latest_logs = container.logs().decode().replace(old_logs, '')
     assert 'ACCOUNT' in latest_logs
 
+@pytest.mark.no_pipeline_support
 @pytest.mark.exploit
 def test_exploit():
     proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
