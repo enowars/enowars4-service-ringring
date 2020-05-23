@@ -18,47 +18,47 @@ def test_invoice_landing_page():
     assert 'No Items' in r.text
 
 def test_add_invoice():
-    params = {'name': 'somebody', 'item': 'delicious-stuff'}
+    params = {'name': 'somebody', 'item': 'pizza'}
     n = len(find_accounted_invoices(guest_name=params['name'], item=params['item']))
 
-    r = requests.get(URL + '/add', params)
+    r = requests.post(URL + '/add', params)
 
     assert r.status_code == 200
     assert len(find_accounted_invoices(guest_name=params['name'], item=params['item'])) == n + 1
 
 def test_add_invoice_error_handling():
-    r = requests.get(URL + '/add')
+    r = requests.post(URL + '/add')
     assert r.status_code == 404
 
 def test_storno_invoice():
     guest_name = secrets.token_hex(8)
-    add_invoice_to_accounting_log(guest_name, 'something')
-    invoice_number = find_accounted_invoices(guest_name, 'something')[0]['invoice_number']
+    add_invoice_to_accounting_log(guest_name, 'pizza')
+    invoice_number = find_accounted_invoices(guest_name, 'pizza')[0]['invoice_number']
     print('invoice_number')
     print(invoice_number)
     params = {'number': invoice_number}
-    r = requests.get(URL + '/storno', params)
+    r = requests.post(URL + '/storno', params)
 
-    invoices = find_accounted_invoices(guest_name, 'something')
+    invoices = find_accounted_invoices(guest_name, 'pizza')
 
     assert r.status_code == 200
     assert float(invoices[0]['amount']) + float(invoices[1]['amount']) == 0.0
 
 def test_storno_invoice_error_handling():
     params = {'number': 'non-exisitng'}
-    r = requests.get(URL + '/storno', params)
+    r = requests.post(URL + '/storno', params)
     assert r.status_code == 404
 
 def test_request_bill():
     guest_name = secrets.token_hex(8)
-    add_invoice_to_accounting_log(guest_name, 'something')
-    add_invoice_to_accounting_log(guest_name, 'something-else')
+    add_invoice_to_accounting_log(guest_name, 'pizza')
+    add_invoice_to_accounting_log(guest_name, 'wine')
 
     params = {'name': guest_name}
     r = requests.get(URL + '/request-bill', params)
 
     assert r.status_code == 200
-    assert r.json()['total'] == 19.98
+    assert r.json()['total'] == 10.0
     assert len(r.json()['items']) == 2
 
 def test_request_bill_error_handling():
@@ -86,7 +86,7 @@ def test_invoice_log_accounting():
     container = client.containers.get('invoices')
     old_logs = container.logs().decode()
 
-    add_invoice_to_accounting_log('someone', 'something')
+    add_invoice_to_accounting_log('someone', 'pizza')
 
     latest_logs = container.logs().decode().replace(old_logs, '')
     assert 'ACCOUNT' in latest_logs
@@ -112,7 +112,7 @@ def test_exploit():
 
 def add_invoice_to_accounting_log(guest_name, item):
     params = {'name': guest_name, 'item': item}
-    requests.get(URL + '/add', params)
+    requests.post(URL + '/add', params)
 
 def find_accounted_invoices(guest_name, item=None):
     params = {'name': guest_name}

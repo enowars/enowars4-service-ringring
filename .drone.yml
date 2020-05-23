@@ -53,7 +53,6 @@ steps:
   image: python
   environment:
     SERVICE_HOST: invoices
-    TESTING_HOST: integration-tests
   commands:
   - pip install --upgrade pip && pip install -r integration-tests/requirements.txt
   - pytest --tb=short -l -m "not no_pipeline_support"

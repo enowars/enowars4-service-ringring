@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request, make_response, jsonify
+from flask import Flask, render_template, request, redirect, make_response, jsonify
 from flask_table import Table, Col
+from urllib.parse import urlparse
 from pathlib import Path
 import logging.config
 import secrets
@@ -23,7 +24,7 @@ class InvoiceFilter():
     def filter(self, logRecord):
         return logRecord.levelno == ACCOUNT
 
-@app.route("/")
+@app.route('/')
 def home():
     log_level = request.args.get('log-level', 'DEBUG')
     controller = get_invoice_controller(log_level)
@@ -43,11 +44,11 @@ def home():
     #     response.set_cookie('session_id', session_id)
     #     db_helper.add_session(session_id)
 
-@app.route("/add")
+@app.route('/add', methods=['POST'])
 def add_to_bill():
-    guest_name = request.args.get('name')
-    invoice_item = request.args.get('item')
-    note = request.args.get('note', '')
+    guest_name = request.form.get('name')
+    invoice_item = request.form.get('item')
+    note = request.form.get('note', '')
 
     if not validate_invoice(guest_name, invoice_item):
         logger.warning(f"Aborting invoice accounting - invoice parameters guest name '{guest_name}' and item '{invoice_item}' are not valid (HTTP 404).")
@@ -67,10 +68,10 @@ def add_to_bill():
     controller.account(f'invoice #{invoice_number} accounted', extra=invoice)
     return jsonify(success=True)
 
-@app.route("/storno")
+@app.route('/storno', methods=['POST'])
 def storno():
     controller = get_invoice_controller()
-    invoice_number = request.args.get('number')
+    invoice_number = request.form.get('number')
     for invoice in accounted_invoices():
         if invoice['invoice_number'] == invoice_number:
             # creating storno invoice number
@@ -84,7 +85,7 @@ def storno():
     logger.warning(f"cancelling invoice failed - no invoice found for invoice number '{invoice_number}' (HTTP 404).")
     return jsonify(success=False), 404
 
-@app.route("/request-bill")
+@app.route('/request-bill')
 def request_bill():
     guest_name = request.args.get('name')
     logger.info(f"Requesting bill for guest '{guest_name}'...")
@@ -99,11 +100,24 @@ def request_bill():
         total += float(invoice['amount'])
     return jsonify(total=total, items=bill, success=True)
 
+@app.route("/alarm")
+def invoices():
+    url = 'http://' + urlparse(request.base_url).hostname + ':7353/'
+    return redirect(url, code=302)
+
 def validate_invoice(guest_name, invoice_item):
     return guest_name and invoice_item
 
 def get_price(item):
-    return 9.99
+    price_sheet = {
+        'alarm': 1.50,
+        'pizza': 6.00,
+        'wine': 4.00,
+        'room-service-food': 9.99,
+        'reception': 0.0,
+        'extra-cleaning': 20.0
+    }
+    return price_sheet.get(item, None)
 
 def get_invoice_number():
     return secrets.randbits(32)
