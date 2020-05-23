@@ -26,6 +26,10 @@ def test_add_invoice():
     assert r.status_code == 200
     assert len(find_accounted_invoices(guest_name=params['name'], item=params['item'])) == n + 1
 
+def test_add_invoice_error_handling():
+    r = requests.get(URL + '/add')
+    assert r.status_code == 404
+
 def test_storno_invoice():
     guest_name = secrets.token_hex(8)
     add_invoice_to_accounting_log(guest_name, 'something')
@@ -40,7 +44,12 @@ def test_storno_invoice():
     assert r.status_code == 200
     assert float(invoices[0]['amount']) + float(invoices[1]['amount']) == 0.0
 
-def test_bill_requesting():
+def test_storno_invoice_error_handling():
+    params = {'number': 'non-exisitng'}
+    r = requests.get(URL + '/storno', params)
+    assert r.status_code == 404
+
+def test_request_bill():
     guest_name = secrets.token_hex(8)
     add_invoice_to_accounting_log(guest_name, 'something')
     add_invoice_to_accounting_log(guest_name, 'something-else')
@@ -51,6 +60,10 @@ def test_bill_requesting():
     assert r.status_code == 200
     assert r.json()['total'] == 19.98
     assert len(r.json()['items']) == 2
+
+def test_request_bill_error_handling():
+    r = requests.get(URL + '/request-bill')
+    assert r.status_code == 404
 
 @pytest.mark.no_pipeline_support
 def test_setting_log_level():
