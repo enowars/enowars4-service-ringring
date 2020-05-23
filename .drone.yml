@@ -73,6 +73,7 @@ services:
   environment:
     PGPASSWORD: mysecretpassword
     PGHOST: postgres
+    INVOICE_HOST: invoices
 - name: invoices
   image: localhost:5000/ringring-service-invoices
 - name: postgres

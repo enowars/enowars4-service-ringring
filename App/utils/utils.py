@@ -1,6 +1,8 @@
 from flask import request
 import functools
 import logging
+import requests
+import os
 
 
 def debug(_func=None, *, _debug=False, _args_kwargs=True, _returned_value=True, logger=logging.getLogger()):
@@ -34,10 +36,12 @@ def debug(_func=None, *, _debug=False, _args_kwargs=True, _returned_value=True, 
         return decorator_debug(_func)
 
 
-def add_to_invoice(service, price):
-    logging.info(f"Used Service: {service}. Invoice Total: {price}")
+def add_to_invoice(guest_name, service):
+    if 'INVOICE_HOST' not in os.environ:
+        logger = logging.getLogger('RingRing')
+        logger.error(f'Could not create invoice for {service} for {guest_name}. INVOICE_HOST variabe is missing.')
+        return
 
-
-def parse_log(log):
-    pass
-
+    url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/add'
+    params = {'name': guest_name, 'item': service}
+    requests.post(url, params)

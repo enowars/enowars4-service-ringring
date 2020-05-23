@@ -21,7 +21,7 @@ fi
 echo -e "\e[32m\nStarting containers...\e[0m"
 docker run -d -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_USER=ringring -e POSTGRES_DB=service --name=$db $db
 docker run -d -p 7354:7354 --name=$invoices $invoices
-docker run -d -e PGPASSWORD=mysecretpassword -e PGHOST=postgres -p 7353:7353 --name=$app $app
+docker run -d -e PGPASSWORD=mysecretpassword -e PGHOST=$db -e INVOICE_HOST=$invoices -p 7353:7353 --name=$app $app
 
 echo -e "\e[32m\nSetting up container networking...\e[0m"
 docker network rm ring 2> /dev/null || true

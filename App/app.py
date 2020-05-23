@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, make_response
+from flask import Flask, render_template, request, redirect, make_response, jsonify
+from urllib.parse import urlparse
 import re
 import datetime
 import logging
@@ -72,6 +73,10 @@ def alarm():
 
     return render_template("alarm.html", alarms_table=table)
 
+@app.route("/invoices")
+def invoices():
+    url = 'http://' + urlparse(request.base_url).hostname + ':7354/'
+    return redirect(url, code=302)
 
 @app.route("/guests")
 def guests():
@@ -118,7 +123,7 @@ def set_alarm(user_text, state):
         alarm_time = state['alarm_time']
         try:
             logger.debug(f'{session_id}: Set alarm text to: {user_text}.')
-            add_to_invoice('alarm', '1.50€')
+            add_to_invoice(session_id, 'alarm')
             db_helper.insert_alarm(session_id, alarm_time, user_text)
             return {'response': f"Alarm text set to {user_text}.", 'state': {'mode': 'main_menu'}}
         except ValueError:
