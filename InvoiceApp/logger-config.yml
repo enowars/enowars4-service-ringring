@@ -7,23 +7,34 @@ handlers:
   console:
     class: logging.StreamHandler
     formatter: simple
-    level: {level}
     stream: ext://sys.stdout
-  file:
+  settled_invoices:
     class: logging.FileHandler
-    filename: InvoiceApp/invoices/accounting.log
-    level: {level}
-    filters: [invoice_only]
+    filename: InvoiceApp/accounting/settled-invoices.log
+    filters: [settled_invoices_only]
+    mode: a
+    formatter: invoice
+  outstanding_invoices:
+    class: logging.FileHandler
+    filename: InvoiceApp/accounting/outstanding-invoices.log
+    filters: [outstanding_invoices_only]
     mode: a
     formatter: invoice
 filters:
-  invoice_only:
+  settled_invoices_only:
     (): app.InvoiceFilter
+    payment_method: {payment_method}
+    invoice_status: settled
+  outstanding_invoices_only:
+    (): app.InvoiceFilter
+    payment_method: {payment_method}
+    invoice_status: outstanding
 loggers:
   invoice_controller:
     handlers:
     - console
-    - file
+    - settled_invoices
+    - outstanding_invoices
     level: {level}
     propagate: false
 root:

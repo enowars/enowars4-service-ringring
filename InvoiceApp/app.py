@@ -9,6 +9,7 @@ import json
 
 app = Flask(__name__)
 ACCOUNT = 5
+PAYMENT_ON_ACCOUNT = 'room-account'
 
 logger = logging.getLogger('RingRing')
 logger.setLevel(logging.INFO)
@@ -21,13 +22,24 @@ class InvoiceItemTable(Table):
     note = Col('Note')
 
 class InvoiceFilter():
+    def __init__(self, payment_method, invoice_status):
+        self.payment_method = payment_method
+        self.invoice_status = invoice_status
+
+    def get_invoice_status(self, payment_method):
+        if payment_method == 'cash' or payment_method == 'debit':
+            return 'settled'
+        else:
+            return 'outstanding'
+
     def filter(self, logRecord):
-        return logRecord.levelno == ACCOUNT
+        return logRecord.levelno == ACCOUNT and self.get_invoice_status(self.payment_method) == self.invoice_status
 
 @app.route('/')
 def home():
     log_level = request.args.get('log-level', 'DEBUG')
-    controller = get_invoice_controller(log_level)
+    payment_method = request.args.get('payment-method', PAYMENT_ON_ACCOUNT)
+    controller = get_invoice_controller(payment_method, log_level)
     controller.info('log_level')
     guest_name = request.args.get('name')
 
@@ -123,7 +135,7 @@ def get_invoice_number():
     return secrets.randbits(32)
 
 def accounted_invoices(guest_name=None):
-    log = Path('InvoiceApp/invoices/accounting.log')
+    log = Path('InvoiceApp/accounting/outstanding-invoices.log')
     if not log.is_file():
         return
 
@@ -136,9 +148,9 @@ def accounted_invoices(guest_name=None):
 def get_accounted_invoices(guest_name=None):
     return list(accounted_invoices(guest_name))
 
-def get_invoice_controller(log_level='ACCOUNT'):
+def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
     with open('InvoiceApp/logger-config.yml', 'r') as yaml_file:
-        config = yaml_file.read().format(level=log_level)
+        config = yaml_file.read().format(payment_method=payment_method, level=log_level)
         config = yaml.load(config, Loader=yaml.Loader)
         logging.addLevelName(ACCOUNT, 'ACCOUNT')
         logging.config.dictConfig(config)

