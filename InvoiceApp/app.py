@@ -14,13 +14,6 @@ PAYMENT_ON_ACCOUNT = 'room-account'
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-class InvoiceItemTable(Table):
-    invoice_number = Col('Invoice Number')
-    item = Col('Item')
-    name = Col('Guest Name')
-    amount = Col('Amount')
-    note = Col('Note')
-
 class InvoiceFilter():
     def __init__(self, payment_method, invoice_status):
         self.payment_method = payment_method
@@ -37,23 +30,18 @@ class InvoiceFilter():
 
 @app.route('/')
 def home():
+    guest_name = request.args.get('name')
     log_level = request.args.get('log-level', 'DEBUG')
     controller = get_invoice_controller(log_level=log_level)
     controller.info('log_level')
-    guest_name = request.args.get('name')
 
-    guest_invoices = []
-    if guest_name:
-        controller.info(f"Generating invoice overview for guest '{guest_name}'...")
-        guest_invoices = get_accounted_invoices(guest_name=guest_name, include_settled=True)
+    if not guest_name:
+        logger.warning(f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set (HTTP 404).")
+        return jsonify(success=False), 404
 
-    return make_response(render_template("logs.html", table=InvoiceItemTable(guest_invoices)))
-
-    # if not request.cookies.get('session_id'):
-    #     # TODO is uuid safe or rather use hash?
-    #     session_id = str(uuid.uuid4())
-    #     response.set_cookie('session_id', session_id)
-    #     db_helper.add_session(session_id)
+    controller.info(f"Generating invoice overview for guest '{guest_name}'...")
+    guest_invoices = get_accounted_invoices(guest_name=guest_name, include_settled=True)
+    return jsonify(invoices=guest_invoices, success=True)
 
 @app.route('/add', methods=['POST'])
 def add_to_bill():
@@ -111,11 +99,6 @@ def request_bill():
         bill.append(invoice)
         total += float(invoice['amount'])
     return jsonify(total=total, items=bill, success=True)
-
-@app.route("/alarm")
-def invoices():
-    url = 'http://' + urlparse(request.base_url).hostname + ':7353/'
-    return redirect(url, code=302)
 
 def validate_invoice(guest_name, invoice_item):
     return guest_name and invoice_item

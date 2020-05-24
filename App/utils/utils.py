@@ -45,3 +45,21 @@ def add_to_invoice(guest_name, service):
     url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/add'
     params = {'name': guest_name, 'item': service}
     requests.post(url, params)
+
+def get_invoices(guest_name):
+    logger = logging.getLogger('RingRing')
+    if 'INVOICE_HOST' not in os.environ:
+        logger.error(f'Could not get invoice for {guest_name}. INVOICE_HOST variabe is missing.')
+        return []
+    if not guest_name:
+        logger.warning(f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set.")
+        return []
+
+    url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/'
+    params = {'name': guest_name}
+    response = requests.get(url, params)
+
+    if response.status_code != 200:
+        return []
+
+    return response.json()['invoices']

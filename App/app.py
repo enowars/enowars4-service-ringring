@@ -1,9 +1,10 @@
 from flask import Flask, render_template, request, redirect, make_response, jsonify
 from urllib.parse import urlparse
 import re
+import os
 import datetime
 import logging
-from utils import debug, add_to_invoice
+from utils import debug, add_to_invoice, get_invoices
 import json
 import uuid
 from flask_table import Table, Col
@@ -71,12 +72,21 @@ def alarm():
     items = db_helper.get_alarms(request.cookies.get('session_id'))
     table = ItemTable(items)
 
-    return render_template("alarm.html", alarms_table=table)
+    return render_template("service.html", service_description='These are your alarms.', table=table)
 
 @app.route("/invoices")
 def invoices():
-    url = 'http://' + urlparse(request.base_url).hostname + ':7354/'
-    return redirect(url, code=302)
+    guest_name = request.cookies.get('session_id')
+    guest_invoices = get_invoices(guest_name)
+
+    class InvoiceItemTable(Table):
+        invoice_number = Col('Invoice Number')
+        item = Col('Item')
+        name = Col('Guest Name')
+        amount = Col('Amount')
+        note = Col('Note')
+
+    return make_response(render_template("service.html", service_description='These are your invoices.', table=InvoiceItemTable(guest_invoices)))
 
 @app.route("/guests")
 def guests():
@@ -86,7 +96,7 @@ def guests():
     items = db_helper.get_paying_sessions()
     table = ItemTable(items)
 
-    return render_template("guests.html", table=table)
+    return render_template("service.html", service_description='If you are bored, then go and visists some of our other guests.', table=table)
 
 
 @app.route("/make_me_a_vip")
