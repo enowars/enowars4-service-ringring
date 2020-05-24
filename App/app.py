@@ -29,7 +29,6 @@ def home():
     response = make_response(render_template('home.html'))
 
     if not request.cookies.get('session_id'):
-        # TODO is uuid safe or rather use hash?
         session_id = str(uuid.uuid4())
         response.set_cookie('session_id', session_id)
         db_helper.add_session(session_id)
@@ -49,11 +48,11 @@ def get_bot_response():
     if (state and state['mode'] == 'alarm') or (re.search('alarm', user_text)):
         return set_alarm(user_text, state)
 
-    elif re.search('lonely', user_text):
+    elif re.search('lonely', user_text) or re.search('bored', user_text):
         return {'response': 'Go to /guests to see how other guests are doing.'}
 
     else:
-        logger.debug('Something very secret.')
+        # logger.debug('Something very secret.')
         return {'response': '''I have no service registered to that request. These are the services that I can provoide: \n
         - set an alarm \n
         - order champaign \n
@@ -74,6 +73,7 @@ def alarm():
 
     return render_template('service.html', service_description='These are your alarms.', table=table)
 
+
 @app.route('/invoices')
 def invoices():
     guest_name = request.cookies.get('session_id')
@@ -86,7 +86,9 @@ def invoices():
         amount = Col('Amount')
         note = Col('Note')
 
-    return make_response(render_template('service.html', service_description='These are your invoices.', table=InvoiceItemTable(guest_invoices)))
+    return make_response(render_template('service.html', service_description='These are your invoices.',
+                                         table=InvoiceItemTable(guest_invoices)))
+
 
 @app.route('/guests')
 def guests():
@@ -96,7 +98,9 @@ def guests():
     items = db_helper.get_paying_sessions()
     table = ItemTable(items)
 
-    return render_template('service.html', service_description='If you are bored, then go and visists some of our other guests.', table=table)
+    return render_template('service.html',
+                           service_description='If you are bored, then go and visists some of our other guests.',
+                           table=table)
 
 
 @app.route('/make_me_a_vip')
