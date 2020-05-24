@@ -64,4 +64,8 @@ def get_invoices(guest_name):
     if response.status_code != 200:
         return []
 
-    return response.json()['invoices']
+    invoices = response.json()['invoices']
+    for invoice in invoices:
+        invoice['name'] = guest_name
+
+    return invoices
