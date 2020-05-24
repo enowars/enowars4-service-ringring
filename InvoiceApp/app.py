@@ -11,7 +11,7 @@ app = Flask(__name__)
 ACCOUNT = 5
 PAYMENT_ON_ACCOUNT = 'room-account'
 
-logger = logging.getLogger('RingRing')
+logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 class InvoiceItemTable(Table):
@@ -38,15 +38,14 @@ class InvoiceFilter():
 @app.route('/')
 def home():
     log_level = request.args.get('log-level', 'DEBUG')
-    payment_method = request.args.get('payment-method', PAYMENT_ON_ACCOUNT)
-    controller = get_invoice_controller(payment_method, log_level)
+    controller = get_invoice_controller(log_level=log_level)
     controller.info('log_level')
     guest_name = request.args.get('name')
 
     guest_invoices = []
     if guest_name:
         controller.info(f"Generating invoice overview for guest '{guest_name}'...")
-        guest_invoices = get_accounted_invoices(guest_name)
+        guest_invoices = get_accounted_invoices(guest_name=guest_name, include_settled=True)
 
     return make_response(render_template("logs.html", table=InvoiceItemTable(guest_invoices)))
 
@@ -60,6 +59,7 @@ def home():
 def add_to_bill():
     guest_name = request.form.get('name')
     invoice_item = request.form.get('item')
+    payment_method = request.form.get('payment-method', PAYMENT_ON_ACCOUNT)
     note = request.form.get('note', '')
 
     if not validate_invoice(guest_name, invoice_item):
@@ -76,7 +76,7 @@ def add_to_bill():
         'note': note
         }
 
-    controller = get_invoice_controller()
+    controller = get_invoice_controller(payment_method=payment_method)
     controller.account(f'invoice #{invoice_number} accounted', extra=invoice)
     return jsonify(success=True)
 
@@ -134,19 +134,21 @@ def get_price(item):
 def get_invoice_number():
     return secrets.randbits(32)
 
-def accounted_invoices(guest_name=None):
-    log = Path('InvoiceApp/accounting/outstanding-invoices.log')
-    if not log.is_file():
+def accounted_invoices(guest_name=None, file_path='InvoiceApp/accounting/outstanding-invoices.log'):
+    if not Path(file_path).is_file():
         return
 
-    with log.open() as journal:
+    with open(file_path) as journal:
         for entry in journal:
             invoice = json.loads(entry)
             if not guest_name or invoice['name'] == guest_name:
                 yield invoice
 
-def get_accounted_invoices(guest_name=None):
-    return list(accounted_invoices(guest_name))
+def get_accounted_invoices(guest_name=None, include_settled=False):
+    invoices = list(accounted_invoices(guest_name=guest_name))
+    if include_settled:
+        invoices.extend(accounted_invoices(guest_name=guest_name, file_path='InvoiceApp/accounting/settled-invoices.log'))
+    return invoices
 
 def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
     with open('InvoiceApp/logger-config.yml', 'r') as yaml_file:
