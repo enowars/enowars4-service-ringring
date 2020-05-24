@@ -24,9 +24,9 @@ logger.setLevel(logging.INFO)
 
 # TODO: make endpoint have proper http verbs
 
-@app.route("/")
+@app.route('/')
 def home():
-    response = make_response(render_template("home.html"))
+    response = make_response(render_template('home.html'))
 
     if not request.cookies.get('session_id'):
         # TODO is uuid safe or rather use hash?
@@ -37,7 +37,7 @@ def home():
     return response
 
 
-@app.route("/get_bot_response")
+@app.route('/get_bot_response')
 def get_bot_response():
     user_text = request.args.get('msg')
     state = request.args.get('state')
@@ -50,19 +50,19 @@ def get_bot_response():
         return set_alarm(user_text, state)
 
     elif re.search('lonely', user_text):
-        return {'response': "Go to /guests to see how other guests are doing."}
+        return {'response': 'Go to /guests to see how other guests are doing.'}
 
     else:
-        logger.debug("Something very secret.")
-        return {'response': """I have no service registered to that request. These are the services that I can provoide: \n
+        logger.debug('Something very secret.')
+        return {'response': '''I have no service registered to that request. These are the services that I can provoide: \n
         - set an alarm \n
         - order champaign \n
         - ...
-        """,
+        ''',
                 'state': json.dumps({'mode': 'main_menu'})}
 
 
-@app.route("/alarm")
+@app.route('/alarm')
 def alarm():
     class ItemTable(Table):
         time = Col('time')
@@ -72,9 +72,9 @@ def alarm():
     items = db_helper.get_alarms(request.cookies.get('session_id'))
     table = ItemTable(items)
 
-    return render_template("service.html", service_description='These are your alarms.', table=table)
+    return render_template('service.html', service_description='These are your alarms.', table=table)
 
-@app.route("/invoices")
+@app.route('/invoices')
 def invoices():
     guest_name = request.cookies.get('session_id')
     guest_invoices = get_invoices(guest_name)
@@ -86,9 +86,9 @@ def invoices():
         amount = Col('Amount')
         note = Col('Note')
 
-    return make_response(render_template("service.html", service_description='These are your invoices.', table=InvoiceItemTable(guest_invoices)))
+    return make_response(render_template('service.html', service_description='These are your invoices.', table=InvoiceItemTable(guest_invoices)))
 
-@app.route("/guests")
+@app.route('/guests')
 def guests():
     class ItemTable(Table):
         guest_id = Col('guest_id')
@@ -96,10 +96,10 @@ def guests():
     items = db_helper.get_paying_sessions()
     table = ItemTable(items)
 
-    return render_template("service.html", service_description='If you are bored, then go and visists some of our other guests.', table=table)
+    return render_template('service.html', service_description='If you are bored, then go and visists some of our other guests.', table=table)
 
 
-@app.route("/make_me_a_vip")
+@app.route('/make_me_a_vip')
 def make_me_a_vip():
     session_id = request.cookies.get('session_id')
     db_helper.make_vip(session_id)
@@ -123,11 +123,11 @@ def set_alarm(user_text, state):
             alarm_time = datetime.datetime.strptime(user_text, '%H:%M')
             logger.debug(f'{session_id}: Set alarm with time: {alarm_time}.')
             return {
-                'response': f"alarm time set to {user_text}. What do you want us to say, when we wake you up?",
+                'response': f'alarm time set to {user_text}. What do you want us to say, when we wake you up?',
                 'state': json.dumps({'mode': 'alarm',
                                      'alarm_time': user_text})}
         except ValueError:
-            return {'response': "This was not a valid input. Try again.",
+            return {'response': 'This was not a valid input. Try again.',
                     'state': json.dumps({'mode': 'alarm'})}
     elif 'alarm_time' in state:
         alarm_time = state['alarm_time']
@@ -135,15 +135,15 @@ def set_alarm(user_text, state):
             logger.debug(f'{session_id}: Set alarm text to: {user_text}.')
             add_to_invoice(session_id, 'alarm')
             db_helper.insert_alarm(session_id, alarm_time, user_text)
-            return {'response': f"Alarm text set to {user_text}.", 'state': {'mode': 'main_menu'}}
+            return {'response': f'Alarm text set to {user_text}.', 'state': {'mode': 'main_menu'}}
         except ValueError:
-            return {'response': "This was not a valid input. Try again.",
+            return {'response': 'This was not a valid input. Try again.',
                     'state': json.dumps({'mode': 'alarm',
                                          'alarm_time': alarm_time})}
     else:
-        return {'response': "For what time do you want to set the alarm? Please use HH:MM.",
+        return {'response': 'For what time do you want to set the alarm? Please use HH:MM.',
                 'state': json.dumps({'mode': 'alarm'})}
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(port=7353, host='0.0.0.0')

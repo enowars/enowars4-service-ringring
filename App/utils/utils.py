@@ -14,10 +14,10 @@ def debug(_func=None, *, _debug=False, _args_kwargs=True, _returned_value=True, 
                 signature = ''
                 if _args_kwargs:
                     args_repr = [repr(a) for a in args]
-                    kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]
-                    signature = ", ".join(args_repr + kwargs_repr)
+                    kwargs_repr = [f'{k}={v!r}' for k, v in kwargs.items()]
+                    signature = ', '.join(args_repr + kwargs_repr)
                     logger.setLevel(logging.DEBUG)
-                    logger.debug(f"Calling {func.__name__}({signature})")
+                    logger.debug(f'Calling {func.__name__}({signature})')
                 else:
                     logger.debug(f'Calling {func.__name__}')
 
@@ -25,7 +25,7 @@ def debug(_func=None, *, _debug=False, _args_kwargs=True, _returned_value=True, 
 
             if _debug == 'True':
                 if _returned_value:
-                    logger.debug(f"{func.__name__!r} returned {value!r}")
+                    logger.debug(f'{func.__name__!r} returned {value!r}')
             return value
 
         return wrapper_debug
@@ -49,7 +49,7 @@ def add_to_invoice(guest_name, service):
 def get_invoices(guest_name):
     logger = logging.getLogger('RingRing')
     if 'INVOICE_HOST' not in os.environ:
-        logger.error(f'Could not get invoice for {guest_name}. INVOICE_HOST variabe is missing.')
+        logger.error(f"Could not get invoice for '{guest_name}''. INVOICE_HOST variabe is missing.")
         return []
     if not guest_name:
         logger.warning(f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set.")

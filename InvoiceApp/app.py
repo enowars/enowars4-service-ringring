@@ -151,5 +151,5 @@ def account(self, msg, *args, **kwargs):
 def start_app(host, threaded=False):
     app.run(port=7354, host=host, threaded=threaded)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     start_app(host='0.0.0.0')
