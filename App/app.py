@@ -51,6 +51,8 @@ def get_bot_response():
     elif re.search('lonely', user_text) or re.search('bored', user_text):
         return {'response': 'Go to /guests to see how other guests are doing.'}
 
+    elif (state and state['mode'] == 'invoice') or (re.search('invoice', user_text)):
+        return make_invoice(user_text, state)
     else:
         # logger.debug('Something very secret.')
         return {'response': '''I have no service registered to that request. These are the services that I can provoide: \n
@@ -115,7 +117,7 @@ def make_me_a_vip():
             return {'response': 'recalc must be either True or False'}
         db_helper.update_invoicing(vips_are_billable)
 
-    return {'response': 'Sucess.'}
+    return {'response': 'Success.'}
 
 
 @debug(logger=logger, _debug=False)
@@ -147,6 +149,34 @@ def set_alarm(user_text, state):
     else:
         return {'response': 'For what time do you want to set the alarm? Please use HH:MM.',
                 'state': json.dumps({'mode': 'alarm'})}
+
+
+def make_invoice(user_text, state):
+    session_id = request.cookies.get('session_id')
+    mode = state['mode']
+
+    if mode == 'invoice':
+        if state['invoice_step'] == '1':
+            if user_text not in ('y', 'n'):
+                return {'response': 'I did not quite get that. Please answer with y or n.',
+                        'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
+            elif user_text == 'n':
+                return {'response': 'No problem. You can pay any time you want. But we will not forget your open bills!',
+                        'state': json.dumps({'mode': 'main_menu'})}
+            else:
+                return {'response': 'Do you want to pay with debit card or cash?',
+                        'state': json.dumps({'mode': 'invoice', 'invoice_step': '2'})}
+        elif state['invoice_step'] == '2':
+            if re.search("debit card", user_text) or re.search("cash", user_text):
+                return {'response': 'It was a pleasure to have you as our guest. Make sure to come back soon!',
+                    'state': json.dumps({'mode': 'main_menu'})}
+            else:
+                return {'response': 'I did not quite get that. Please answer with debit card or cash',
+                        'state': json.dumps({'mode': 'invoice', 'invoice_step': '2'})}
+
+    else:
+        return {'response': 'Do you want to pay your open invoices now?[y or n]',
+                'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
 
 
 if __name__ == '__main__':
