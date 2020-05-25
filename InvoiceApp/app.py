@@ -14,7 +14,8 @@ PAYMENT_ON_ACCOUNT = 'room-account'
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-class InvoiceFilter():
+
+class InvoiceFilter:
     def __init__(self, payment_method, invoice_status):
         self.payment_method = payment_method
         self.invoice_status = invoice_status
@@ -28,6 +29,7 @@ class InvoiceFilter():
     def filter(self, logRecord):
         return logRecord.levelno == ACCOUNT and self.get_invoice_status(self.payment_method) == self.invoice_status
 
+
 @app.route('/')
 def home():
     guest_name = request.args.get('name')
@@ -36,12 +38,14 @@ def home():
     controller.info('log_level')
 
     if not guest_name:
-        logger.warning(f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set (HTTP 404).")
+        logger.warning(
+            f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set (HTTP 404).")
         return jsonify(success=False), 404
 
     controller.info(f"Generating invoice overview for guest '{guest_name}'...")
     guest_invoices = get_accounted_invoices(guest_name=guest_name, include_settled=True)
     return jsonify(invoices=guest_invoices, success=True)
+
 
 @app.route('/add', methods=['POST'])
 def add_to_bill():
@@ -51,7 +55,8 @@ def add_to_bill():
     note = request.form.get('note', '')
 
     if not validate_invoice(guest_name, invoice_item):
-        logger.warning(f"Aborting invoice accounting - invoice parameters guest name '{guest_name}' and item '{invoice_item}' are not valid (HTTP 404).")
+        logger.warning(
+            f"Aborting invoice accounting - invoice parameters guest name '{guest_name}' and item '{invoice_item}' are not valid (HTTP 404).")
         return jsonify(success=False), 404
 
     amount = get_price(invoice_item)
@@ -62,11 +67,12 @@ def add_to_bill():
         'guest_name': guest_name,
         'amount': amount,
         'note': note
-        }
+    }
 
     controller = get_invoice_controller(payment_method=payment_method)
     controller.account(f'invoice #{invoice_number} accounted', extra=invoice)
     return jsonify(success=True)
+
 
 @app.route('/storno', methods=['POST'])
 def storno():
@@ -79,11 +85,13 @@ def storno():
             invoice['amount'] = float(invoice['amount']) * -1
             invoice['guest_name'] = invoice.pop('name')
             invoice.pop('time')
-            controller.account(f"cancelling invoice #{invoice_number} (negative booking #{invoice['invoice_number']})", extra=invoice)
+            controller.account(f"cancelling invoice #{invoice_number} (negative booking #{invoice['invoice_number']})",
+                               extra=invoice)
             return jsonify(success=True)
 
     logger.warning(f"cancelling invoice failed - no invoice found for invoice number '{invoice_number}' (HTTP 404).")
     return jsonify(success=False), 404
+
 
 @app.route('/request-bill')
 def request_bill():
@@ -100,8 +108,10 @@ def request_bill():
         total += float(invoice['amount'])
     return jsonify(total=total, items=bill, success=True)
 
+
 def validate_invoice(guest_name, invoice_item):
     return guest_name and invoice_item
+
 
 def get_price(item):
     price_sheet = {
@@ -114,8 +124,10 @@ def get_price(item):
     }
     return price_sheet.get(item, None)
 
+
 def get_invoice_number():
     return secrets.randbits(32)
+
 
 def accounted_invoices(guest_name=None, file_path='InvoiceApp/accounting/outstanding-invoices.log'):
     if not Path(file_path).is_file():
@@ -127,11 +139,14 @@ def accounted_invoices(guest_name=None, file_path='InvoiceApp/accounting/outstan
             if not guest_name or invoice['name'] == guest_name:
                 yield invoice
 
+
 def get_accounted_invoices(guest_name=None, include_settled=False):
     invoices = list(accounted_invoices(guest_name=guest_name))
     if include_settled:
-        invoices.extend(accounted_invoices(guest_name=guest_name, file_path='InvoiceApp/accounting/settled-invoices.log'))
+        invoices.extend(
+            accounted_invoices(guest_name=guest_name, file_path='InvoiceApp/accounting/settled-invoices.log'))
     return invoices
+
 
 def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
     with open('InvoiceApp/logger-config.yml', 'r') as yaml_file:
@@ -144,12 +159,15 @@ def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT
         logger.debug('invoice-controller logger started.')
     return logger
 
+
 def account(self, msg, *args, **kwargs):
     if self.isEnabledFor(ACCOUNT):
         self._log(ACCOUNT, msg, args, **kwargs)
 
+
 def start_app(host, threaded=False):
     app.run(port=7354, host=host, threaded=threaded)
+
 
 if __name__ == '__main__':
     start_app(host='0.0.0.0')
