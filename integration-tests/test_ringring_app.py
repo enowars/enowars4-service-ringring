@@ -24,9 +24,9 @@ def test_session_id():
     assert SESSION.cookies.get('session_id')
 
 
-def test_alarm_page(check_for_alarm=None):
+def test_alarm_page(check_for_alarm=None, session=SESSION):
     url = URL + '/alarm'
-    r = SESSION.get(url)
+    r = session.get(url)
     assert r.status_code == 200
     if check_for_alarm:
         assert check_for_alarm in r.text
@@ -46,12 +46,13 @@ def test_guests_page(is_hidden=False, session_id=None, session=SESSION):
         assert guest_id in r.text
 
 
-def test_invoice_page(check_for_alarm_invoice=False):
+def test_invoice_page(check_for_alarm_invoice=False, session=SESSION):
     url = URL + '/invoices'
-    r = SESSION.get(url)
+    r = session.get(url)
     assert r.status_code == 200
     if check_for_alarm_invoice:
         assert 'alarm' in r.text
+        assert session.cookies.get('session_id') in r.text
 
 
 def test_add_alarm(alarm_text='some testing text', session=SESSION):
@@ -67,13 +68,21 @@ def test_add_alarm(alarm_text='some testing text', session=SESSION):
     r = session.get(url, params=step_2_params)
     assert r.status_code == 200
     assert json.loads(r.json()['state'])['alarm_time'] == '12:12'
+    assert json.loads(r.json()['state'])['mode'] == 'alarm'
 
     step_3_params = {'msg': alarm_text, 'state': json.dumps({'mode': 'alarm', 'alarm_time': '12:12'})}
     r = session.get(url, params=step_3_params)
     assert r.status_code == 200
+    assert json.loads(r.json()['state'])['payment'] == 'pending'
+    assert json.loads(r.json()['state'])['mode'] == 'alarm'
 
-    test_alarm_page(check_for_alarm='some testing text')
-    test_invoice_page(check_for_alarm_invoice=True)
+    step_4_params = {'msg': 'room-bill', 'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
+    r = session.get(url, params=step_4_params)
+    assert r.status_code == 200
+    assert json.loads(r.json()['state'])['mode'] == 'main_menu'
+
+    test_alarm_page(check_for_alarm=alarm_text, session=session)
+    test_invoice_page(check_for_alarm_invoice=True, session=session)
 
     db_data = get_alarm_texts_from_db(session.cookies.get('session_id'))
     assert alarm_text in db_data
@@ -144,6 +153,34 @@ def test_db_constraint_working():
     assert 'Success' in r.text
 
 
+def test_invoice_generation():
+    session = requests.session()
+    session.get(URL)
+    test_add_alarm('invoice_test_alarm', session=session)
+    step_1_params = {'msg': 'invoice'}
+    url = URL + '/get_bot_response'
+
+    r = session.get(url, params=step_1_params)
+    assert r.status_code == 200
+    assert 'state' in r.json()
+    assert 'mode' in json.loads(r.json()['state'])
+    assert json.loads(r.json()['state'])['mode'] == 'invoice'
+    assert json.loads(r.json()['state'])['invoice_step'] == '1'
+
+    step_2_params = {'msg': 'bla', 'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
+    r = session.get(url, params=step_2_params)
+    assert r.status_code == 200
+    assert 'Please answer with y or n.' in r.text
+    assert json.loads(r.json()['state'])['mode'] == 'invoice'
+    assert json.loads(r.json()['state'])['invoice_step'] == '1'
+
+    step_2_params = {'msg': 'y', 'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
+    r = session.get(url, params=step_2_params)
+    assert r.status_code == 200
+    assert 'for a total ammount of <b>1.5' in r.text
+    assert json.loads(r.json()['state'])['mode'] == 'main_menu'
+
+
 def get_alarm_texts_from_db(session_id):
     conn = psycopg2.connect(CONNECTION_STRING)
     cur = conn.cursor()
@@ -175,3 +212,4 @@ def get_all_session_from_db():
     conn.close()
 
     return data
+
