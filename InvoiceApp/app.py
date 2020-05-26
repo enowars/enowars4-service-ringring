@@ -9,7 +9,7 @@ import json
 
 app = Flask(__name__)
 ACCOUNT = 5
-PAYMENT_ON_ACCOUNT = 'room-account'
+PAYMENT_ON_ACCOUNT = 'room-bill'
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

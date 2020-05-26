@@ -4,7 +4,8 @@ import re
 import os
 import datetime
 import logging
-from utils import debug, add_to_invoice, get_invoices
+from utils import debug
+from utils.invoices_connector import add_to_invoice, get_invoices, request_bill
 import json
 import uuid
 from flask_table import Table, Col
@@ -55,9 +56,9 @@ def get_bot_response():
         return make_invoice(user_text, state)
     else:
         # logger.debug('Something very secret.')
-        return {'response': '''I have no service registered to that request. These are the services that I can provoide: \n
-        - set an alarm \n
-        - order champaign \n
+        return {'response': '''I have no service registered to that request. These are the services that I can provoide: <br>
+        - set an alarm <br>
+        - order champaign <br>
         - ...
         ''',
                 'state': json.dumps({'mode': 'main_menu'})}
@@ -124,28 +125,39 @@ def make_me_a_vip():
 def set_alarm(user_text, state):
     session_id = request.cookies.get('session_id')
     mode = state['mode']
-    if mode == 'alarm' and 'alarm_time' not in state:
-        try:
-            alarm_time = datetime.datetime.strptime(user_text, '%H:%M')
-            logger.debug(f'{session_id}: Set alarm with time: {alarm_time}.')
-            return {
-                'response': f'alarm time set to {user_text}. What do you want us to say, when we wake you up?',
-                'state': json.dumps({'mode': 'alarm',
-                                     'alarm_time': user_text})}
-        except ValueError:
-            return {'response': 'This was not a valid input. Try again.',
-                    'state': json.dumps({'mode': 'alarm'})}
-    elif 'alarm_time' in state:
-        alarm_time = state['alarm_time']
-        try:
-            logger.debug(f'{session_id}: Set alarm text to: {user_text}.')
-            add_to_invoice(session_id, 'alarm')
-            db_helper.insert_alarm(session_id, alarm_time, user_text)
-            return {'response': f'Alarm text set to {user_text}.', 'state': {'mode': 'main_menu'}}
-        except ValueError:
-            return {'response': 'This was not a valid input. Try again.',
+    if mode == 'alarm':
+        if 'alarm_time' in state:
+            alarm_time = state['alarm_time']
+            try:
+                logger.debug(f'{session_id}: Set alarm text to: {user_text}.')
+                db_helper.insert_alarm(session_id, alarm_time, user_text)
+                return {
+                    'response': f'Alarm text set to {user_text}. <br>Do you want to pay [now] or put it on your [room-bill]?',
+                    'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
+            except ValueError:
+                return {'response': 'This was not a valid input. Try again.',
+                        'state': json.dumps({'mode': 'alarm',
+                                             'alarm_time': alarm_time})}
+        elif 'payment' in state:
+            if user_text not in ('now', 'room-bill'):
+                return {'response': 'This was not a valid input. Try [now] or [room-bill].',
+                        'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
+            else:
+                add_to_invoice(session_id, 'alarm', payment_method=user_text)
+                return {'response': 'Perfect. Thank you very much.',
+                        'state': json.dumps({'mode': 'main_menu'})}
+        else:
+            try:
+                alarm_time = datetime.datetime.strptime(user_text, '%H:%M')
+                logger.debug(f'{session_id}: Set alarm with time: {alarm_time}.')
+                return {
+                    'response': f'alarm time set to {user_text}. What do you want us to say, when we wake you up?',
                     'state': json.dumps({'mode': 'alarm',
-                                         'alarm_time': alarm_time})}
+                                         'alarm_time': user_text})}
+            except ValueError:
+                return {'response': 'This was not a valid input. Try again.',
+                        'state': json.dumps({'mode': 'alarm'})}
+
     else:
         return {'response': 'For what time do you want to set the alarm? Please use HH:MM.',
                 'state': json.dumps({'mode': 'alarm'})}
@@ -161,18 +173,18 @@ def make_invoice(user_text, state):
                 return {'response': 'I did not quite get that. Please answer with y or n.',
                         'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
             elif user_text == 'n':
-                return {'response': 'No problem. You can pay any time you want. But we will not forget your open bills!',
-                        'state': json.dumps({'mode': 'main_menu'})}
-            else:
-                return {'response': 'Do you want to pay with debit card or cash?',
-                        'state': json.dumps({'mode': 'invoice', 'invoice_step': '2'})}
-        elif state['invoice_step'] == '2':
-            if re.search("debit card", user_text) or re.search("cash", user_text):
-                return {'response': 'It was a pleasure to have you as our guest. Make sure to come back soon!',
+                return {
+                    'response': 'No problem. You can pay any time you want. But we will not forget your open bills!',
                     'state': json.dumps({'mode': 'main_menu'})}
             else:
-                return {'response': 'I did not quite get that. Please answer with debit card or cash',
-                        'state': json.dumps({'mode': 'invoice', 'invoice_step': '2'})}
+                items, total = request_bill(session_id)
+                response_string = "You have paid for the following items: <br>"
+                for item in items:
+                    response_string = response_string + str(item) + '<br>'
+                response_string = response_string + f"""for a total ammount of <b>{total}</b>. <br>
+                                    It was a pleasure to have you as our guest. Make sure to come back soon!"""
+                return {'response': response_string,
+                        'state': json.dumps({'mode': 'main_menu'})}
 
     else:
         return {'response': 'Do you want to pay your open invoices now?[y or n]',
