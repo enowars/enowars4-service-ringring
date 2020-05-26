@@ -9,7 +9,7 @@ import docker
 import os
 
 logger = logging.getLogger()
-URL = f"http://{os.environ['SERVICE_HOST']}:7354"
+URL = f"http://{os.environ['INVOICE_SERVICE_HOST']}:7354"
 
 
 def test_invoice_overview():

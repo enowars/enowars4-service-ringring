@@ -7,7 +7,7 @@ import psycopg2
 from psycopg2 import sql
 
 logger = logging.getLogger()
-URL = f"http://{os.environ['SERVICE_HOST']}:7353"
+URL = f"http://{os.environ['RINGRING_SERVICE_HOST']}:7353"
 SESSION = requests.Session()
 CONNECTION_STRING = f"dbname='service' user='ringring' host='{os.environ['PGHOST']}' password={os.environ['PGPASSWORD']}"
 

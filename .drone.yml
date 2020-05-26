@@ -52,7 +52,10 @@ steps:
 - name: integration-tests
   image: python
   environment:
-    SERVICE_HOST: invoices
+    PGPASSWORD: mysecretpassword
+    PGHOST: postgres
+    INVOICE_SERVICE_HOST: invoices
+    RINGRING_SERVICE_HOST: ringring
   commands:
   - pip install --upgrade pip && pip install -r integration-tests/requirements.txt
   - pytest --tb=short -l -m "not no_pipeline_support"
