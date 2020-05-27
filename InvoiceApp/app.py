@@ -7,10 +7,13 @@ import secrets
 import yaml
 import json
 
-app = Flask(__name__)
 ACCOUNT = 5
 PAYMENT_ON_ACCOUNT = 'room-bill'
+PAYMENT_SETTLED = 'cash'
+OUTSTANDING_INVOICES = 'InvoiceApp/accounting/outstanding-invoices.log'
+SETTLED_INVOICES = 'InvoiceApp/accounting/settled-invoices.log'
 
+app = Flask(__name__)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -106,7 +109,25 @@ def request_bill():
     for invoice in accounted_invoices(guest_name):
         bill.append(invoice)
         total += float(invoice['amount'])
+
+    settle_bill_invoices(bill)
     return jsonify(total=total, items=bill, success=True)
+
+def settle_bill_invoices(bill):
+    controller = get_invoice_controller(payment_method=PAYMENT_SETTLED)
+    for invoice in bill:
+        invoice['guest_name'] = invoice.pop('name')
+        invoice.pop('time')
+        controller.account(f"invoice #{invoice['invoice_number']} settled", extra=invoice)
+
+    invoice_numbers = [invoice['invoice_number'] for invoice in bill]
+    with open(OUTSTANDING_INVOICES, 'r') as f:
+        journal = f.readlines()
+
+    with open(OUTSTANDING_INVOICES, 'w') as f:
+        for invoice in journal:
+            if json.loads(invoice)['invoice_number'] not in invoice_numbers:
+                f.write(invoice)
 
 
 def validate_invoice(guest_name, invoice_item):
@@ -122,14 +143,14 @@ def get_price(item):
         'reception': 0.0,
         'extra-cleaning': 20.0
     }
-    return price_sheet.get(item, None)
+    return price_sheet.get(item, 0)
 
 
 def get_invoice_number():
     return secrets.randbits(32)
 
 
-def accounted_invoices(guest_name=None, file_path='InvoiceApp/accounting/outstanding-invoices.log'):
+def accounted_invoices(guest_name=None, file_path=OUTSTANDING_INVOICES):
     if not Path(file_path).is_file():
         return
 
@@ -144,7 +165,7 @@ def get_accounted_invoices(guest_name=None, include_settled=False):
     invoices = list(accounted_invoices(guest_name=guest_name))
     if include_settled:
         invoices.extend(
-            accounted_invoices(guest_name=guest_name, file_path='InvoiceApp/accounting/settled-invoices.log'))
+            accounted_invoices(guest_name=guest_name, file_path=SETTLED_INVOICES))
     return invoices
 
 
