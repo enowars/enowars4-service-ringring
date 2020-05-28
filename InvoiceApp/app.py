@@ -38,7 +38,7 @@ def home():
     guest_name = request.args.get('name')
     log_level = request.args.get('log-level', 'DEBUG')
     controller = get_invoice_controller(log_level=log_level)
-    controller.info('log_level')
+    controller.info(log_level)
 
     if not guest_name:
         logger.warning(
@@ -166,6 +166,7 @@ def get_accounted_invoices(guest_name=None, include_settled=False):
     if include_settled:
         invoices.extend(
             accounted_invoices(guest_name=guest_name, file_path=SETTLED_INVOICES))
+    logger.info(f"Returning invoices for {guest_name}: {invoices}")
     return invoices
 
 

@@ -28,7 +28,7 @@ def test_add_invoice():
     params = {'name': 'somebody', 'item': 'pizza'}
     n = len(find_accounted_invoices(guest_name=params['name'], item=params['item']))
 
-    r = requests.post(URL + '/add', params)
+    r = requests.post(URL + '/add', data=params)
 
     assert r.status_code == 200
     assert len(find_accounted_invoices(guest_name=params['name'], item=params['item'])) == n + 1
@@ -159,12 +159,12 @@ def add_invoice_to_accounting_log(guest_name, item):
 
 def find_accounted_invoices(guest_name, item=None):
     params = {'name': guest_name}
-    r = requests.get(URL + '/request-bill', params)
+    r = requests.get(URL + '/', params=params)
     if not item:
-        return json.loads(r.text)['items']
+        return json.loads(r.text)['invoices']
 
     invoices = []
-    for invoice in json.loads(r.text)['items']:
+    for invoice in json.loads(r.text)['invoices']:
         if invoice['item'] == item:
             invoices.append(invoice)
     return invoices
