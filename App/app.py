@@ -23,8 +23,6 @@ logger.setLevel(logging.INFO)
 # handler.setFormatter(formatter)
 # logger.addHandler(handler)
 
-# TODO: make endpoint have proper http verbs
-
 @app.route('/')
 def home():
     response = make_response(render_template('home.html'))
@@ -64,7 +62,7 @@ def get_bot_response():
                 'state': json.dumps({'mode': 'main_menu'})}
 
 
-@app.route('/alarm')
+@app.route('/alarm', methods=['GET'])
 def alarm():
     class ItemTable(Table):
         time = Col('time')
@@ -77,7 +75,7 @@ def alarm():
     return render_template('service.html', service_description='These are your alarms.', table=table)
 
 
-@app.route('/invoices')
+@app.route('/invoices', methods=['GET'])
 def invoices():
     guest_name = request.cookies.get('session_id')
     guest_invoices = get_invoices(guest_name)
@@ -93,7 +91,7 @@ def invoices():
                                          table=InvoiceItemTable(guest_invoices)))
 
 
-@app.route('/guests')
+@app.route('/guests', methods=['GET'])
 def guests():
     class ItemTable(Table):
         guest_id = Col('guest_id')
@@ -106,14 +104,15 @@ def guests():
                            table=table)
 
 
-@app.route('/make_me_a_vip')
+@app.route('/make_me_a_vip', methods=['POST'])
 def make_me_a_vip():
     session_id = request.cookies.get('session_id')
     db_helper.make_vip(session_id)
 
-    if 'recalc' in request.args:
+    recalc = request.form.get('recalc')
+    if recalc:
         try:
-            vips_are_billable = ast.literal_eval(request.args.get('recalc'))
+            vips_are_billable = ast.literal_eval(recalc)
         except ValueError:
             return {'response': 'recalc must be either True or False'}
         db_helper.update_invoicing(vips_are_billable)

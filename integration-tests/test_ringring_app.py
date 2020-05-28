@@ -98,7 +98,7 @@ def test_bored():
 
 def test_vip():
     url = URL + '/make_me_a_vip'
-    SESSION.get(url)
+    SESSION.post(url)
     test_guests_page(is_hidden=True)
 
 
@@ -109,7 +109,7 @@ def test_exploit():
     non_vip_session = requests.Session()
 
     vip_session.get(URL)
-    vip_session.get(URL + '/make_me_a_vip')
+    vip_session.post(URL + '/make_me_a_vip')
     test_add_alarm(alarm_text='FLAGFLAGFLAG', session=vip_session)
 
     test_guests_page(is_hidden=True, session_id=vip_session.cookies.get('session_id'))
@@ -118,7 +118,7 @@ def test_exploit():
     test_guests_page(is_hidden=False, session_id=non_vip_session.cookies.get('session_id'))
 
     exploit_params = {'recalc': 'None'}
-    vip_session.get(URL + '/make_me_a_vip', params=exploit_params)
+    vip_session.post(URL + '/make_me_a_vip', data=exploit_params)
 
     test_guests_page(is_hidden=False, session_id=vip_session.cookies.get('session_id'), session=non_vip_session)
     test_guests_page(is_hidden=False, session_id=non_vip_session.cookies.get('session_id'), session=non_vip_session)
@@ -131,7 +131,7 @@ def test_exploit():
 def test_vip_not_visible():
     vip_session = requests.Session()
     vip_session.get(URL)
-    vip_session.get(URL + '/make_me_a_vip')
+    vip_session.post(URL + '/make_me_a_vip')
 
     non_vip_session = requests.Session()
     non_vip_session.get(URL)
@@ -141,14 +141,14 @@ def test_vip_not_visible():
 
 def test_db_constraint_working():
     SESSION.get(URL)
-    r = SESSION.get(URL + '/make_me_a_vip', params={'recalc': 'bla'})
+    r = SESSION.post(URL + '/make_me_a_vip', data={'recalc': 'bla'})
     assert r.status_code == 200
     assert 'recalc must be either True or False' in r.text
 
-    r = SESSION.get(URL + '/make_me_a_vip', params={'recalc': 'True'})
+    r = SESSION.post(URL + '/make_me_a_vip', data={'recalc': 'True'})
     assert r.status_code == 500
 
-    r = SESSION.get(URL + '/make_me_a_vip', params={'recalc': 'False'})
+    r = SESSION.post(URL + '/make_me_a_vip', data={'recalc': 'False'})
     assert r.status_code == 200
     assert 'Success' in r.text
 
