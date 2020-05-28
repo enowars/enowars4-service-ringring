@@ -113,6 +113,7 @@ def request_bill():
     settle_bill_invoices(bill)
     return jsonify(total=total, items=bill, success=True)
 
+
 def settle_bill_invoices(bill):
     controller = get_invoice_controller(payment_method=PAYMENT_SETTLED)
     for invoice in bill:
@@ -138,6 +139,8 @@ def get_price(item):
     price_sheet = {
         'alarm': 1.50,
         'pizza': 6.00,
+        'bred': 2.00,
+        'fish': 15.00,
         'wine': 4.00,
         'room-service-food': 9.99,
         'reception': 0.0,

@@ -1,21 +1,20 @@
-from flask import Flask, render_template, request, redirect, make_response, jsonify
-from urllib.parse import urlparse
+from flask import Flask, render_template, request, make_response
 import re
-import os
 import datetime
 import logging
-from utils import debug
+from utils import debug, db_helper
 from utils.invoices_connector import add_to_invoice, get_invoices, request_bill
 import json
 import uuid
 from flask_table import Table, Col
-import db_helper
 import ast
 
 app = Flask(__name__)
 
 logger = logging.getLogger('RingRing')
 logger.setLevel(logging.INFO)
+
+AVAILABLE_FOOD = ['pizza', 'bred', 'fish']
 
 
 # handler = logging.FileHandler(os.environ['LOGDIR'])
@@ -49,6 +48,9 @@ def get_bot_response():
 
     elif re.search('lonely', user_text) or re.search('bored', user_text):
         return {'response': 'Go to /guests to see how other guests are doing.'}
+
+    elif re.search('food', user_text) or (state and state['mode'] == 'food_order'):
+        return order_food(user_text, state)
 
     elif (state and state['mode'] == 'invoice') or (re.search('invoice', user_text)):
         return make_invoice(user_text, state)
@@ -85,7 +87,6 @@ def invoices():
         item = Col('Item')
         name = Col('Guest Name')
         amount = Col('Amount')
-        note = Col('Note')
 
     return make_response(render_template('service.html', service_description='These are your invoices.',
                                          table=InvoiceItemTable(guest_invoices)))
@@ -188,6 +189,35 @@ def make_invoice(user_text, state):
     else:
         return {'response': 'Do you want to pay your open invoices now?[y or n]',
                 'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
+
+
+def order_food(user_text, state):
+    session_id = request.cookies.get('session_id')
+    mode = state['mode']
+    if mode == 'food_order':
+        if state['order_step'] == '1':
+            if user_text not in AVAILABLE_FOOD:
+                return {
+                    'response': 'I did not quite get that. Please choose one of <br> {"<br>".join(AVAILABLE_FOOD)}.',
+                    'state': json.dumps({'mode': 'food_order', 'order_step': '1'})}
+            else:
+                return {'response': 'Anything you want to add to your order? Anything we need to know?',
+                        'state': json.dumps({'mode': 'food_order', 'order_step': '2', 'order': user_text})}
+        if state['order_step'] == '2':
+            order = state['order']
+            if user_text == 'No' or user_text == 'no':
+                note = None
+            else:
+                note = user_text
+            add_to_invoice(session_id, order, notes=note)
+            return {'response': 'Thanks a lot for your order. The Microwave is spinning!',
+                    'state': json.dumps({'mode': 'main_menu'})}
+
+    else:
+        return {'response': f"""What food do you want to order? You can choose between <br> 
+                    {'<br>'.join(AVAILABLE_FOOD)}.<br>
+                    I must admit they are all very good. It is going to be a hard choice.""",
+                'state': json.dumps({'mode': 'food_order', 'order_step': '1'})}
 
 
 if __name__ == '__main__':

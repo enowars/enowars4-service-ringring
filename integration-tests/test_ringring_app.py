@@ -46,13 +46,15 @@ def test_guests_page(is_hidden=False, session_id=None, session=SESSION):
         assert guest_id in r.text
 
 
-def test_invoice_page(check_for_alarm_invoice=False, session=SESSION):
+def test_invoice_page(check_for_alarm_invoice=False, session=SESSION, check_for_food_invoice=None):
     url = URL + '/invoices'
     r = session.get(url)
     assert r.status_code == 200
     if check_for_alarm_invoice:
         assert 'alarm' in r.text
         assert session.cookies.get('session_id') in r.text
+    if check_for_food_invoice:
+        pass
 
 
 def test_add_alarm(alarm_text='some testing text', session=SESSION):
@@ -181,6 +183,40 @@ def test_invoice_generation():
     assert json.loads(r.json()['state'])['mode'] == 'main_menu'
 
 
+def test_order_food(session=SESSION):
+    url = URL + '/get_bot_response'
+    step_1_params = {'msg': 'food'}
+    r = session.get(url, params=step_1_params)
+    assert r.status_code == 200
+    assert 'state' in r.json()
+    assert 'mode' in json.loads(r.json()['state'])
+    assert json.loads(r.json()['state'])['mode'] == 'food_order'
+    assert json.loads(r.json()['state'])['order_step'] == '1'
+
+    step_2_wrong_params = {'msg': 'not in the food list',
+                           'state': json.dumps({'mode': 'food_order', 'order_step': '1'})}
+    r = session.get(url, params=step_2_wrong_params)
+    assert r.status_code == 200
+    assert 'Please choose one of' in r.text
+    assert json.loads(r.json()['state'])['mode'] == 'food_order'
+    assert json.loads(r.json()['state'])['order_step'] == '1'
+
+    step_2_params = {'msg': 'fish', 'state': json.dumps({'mode': 'food_order', 'order_step': '1'})}
+    r = session.get(url, params=step_2_params)
+    assert r.status_code == 200
+    assert json.loads(r.json()['state'])['order'] == 'fish'
+    assert json.loads(r.json()['state'])['mode'] == 'food_order'
+    assert json.loads(r.json()['state'])['order_step'] == '2'
+
+    step_3_params = {'msg': 'some_note',
+                     'state': json.dumps({'mode': 'food_order', 'order': 'fish', 'order_step': '2'})}
+    r = session.get(url, params=step_3_params)
+    assert r.status_code == 200
+    assert json.loads(r.json()['state'])['mode'] == 'main_menu'
+
+    test_invoice_page(check_for_food_invoice='fish', session=session)
+
+
 def get_alarm_texts_from_db(session_id):
     conn = psycopg2.connect(CONNECTION_STRING)
     cur = conn.cursor()
@@ -212,4 +248,3 @@ def get_all_session_from_db():
     conn.close()
 
     return data
-
