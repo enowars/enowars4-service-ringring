@@ -2,7 +2,8 @@ import enochecker
 import random
 import json
 from requests import exceptions
-import string
+
+AVAILABLE_FOOD = ['pizza', 'bred', 'fish']
 
 
 class RingRingChecker(enochecker.BaseChecker):
@@ -53,16 +54,15 @@ class RingRingChecker(enochecker.BaseChecker):
             pass
 
     def putnoise(self):
-        self.logger.debug(self.noise)
+        self.logger.debug(f"Putting Noise {self.noise} ...")
+        session_id = self.init_user()
+
+        try:
+            assert session_id
+        except AssertionError:
+            raise enochecker.BrokenServiceException("session_id is not set.")
+
         if self.flag_idx % 2 == 0:
-            self.logger.debug("Putting Noise...")
-            session_id = self.init_user()
-
-            try:
-                assert session_id
-            except AssertionError:
-                raise enochecker.BrokenServiceException("session_id is not set.")
-
             payload = {'msg': self.noise, 'state': json.dumps(
                 {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}"})}
 
@@ -72,7 +72,10 @@ class RingRingChecker(enochecker.BaseChecker):
                                'msg': random.choice(['room-bill', 'now'])}
             self.call_bot_response(payment_payload, mode='alarm noise payment', message_in_response=False)
         else:
-            session_id = self.init_user()
+            payload = {'msg': self.noise,
+                       'state': json.dumps(
+                           {'mode': 'food_order', 'order_step': '2', 'order': random.choice(AVAILABLE_FOOD)})}
+            self.call_bot_response(payload, mode='invoice noise')
 
         self.team_db[self.noise] = (session_id,)
 
