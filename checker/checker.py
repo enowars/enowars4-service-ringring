@@ -12,7 +12,6 @@ class RingRingChecker(enochecker.BaseChecker):
     havoc_count = 0
     service_name = "ringring"
 
-    # TODO add to room-bill when creating alarm (makes more noise)
     def putflag(self):
         session_id = self.init_user()
 
@@ -64,8 +63,7 @@ class RingRingChecker(enochecker.BaseChecker):
             except AssertionError:
                 raise enochecker.BrokenServiceException("session_id is not set.")
 
-            alarm_message = ''.join([random.choice(string.ascii_letters + string.digits) for _ in range(50)])
-            payload = {'msg': alarm_message, 'state': json.dumps(
+            payload = {'msg': self.noise, 'state': json.dumps(
                 {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}"})}
 
             self.call_bot_response(payload, mode='alarm noise')
@@ -73,10 +71,10 @@ class RingRingChecker(enochecker.BaseChecker):
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
                                'msg': random.choice(['room-bill', 'now'])}
             self.call_bot_response(payment_payload, mode='alarm noise payment', message_in_response=False)
-
         else:
-            pass
-        self.team_db['noise'] = 'more noise'
+            session_id = self.init_user()
+
+        self.team_db[self.noise] = (session_id,)
 
     def getnoise(self):
         pass
