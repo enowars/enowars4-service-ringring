@@ -210,7 +210,7 @@ def order_food(user_text, state):
             else:
                 note = user_text
             add_to_invoice(session_id, order, notes=note)
-            return {'response': 'Thanks a lot for your order. The Microwave is spinning!',
+            return {'response': f'Thanks a lot for your order. The Microwave is spinning! We noted: {note}',
                     'state': json.dumps({'mode': 'main_menu'})}
 
     else:
