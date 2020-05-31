@@ -9,7 +9,7 @@ AVAILABLE_FOOD = ['pizza', 'bred', 'fish']
 class RingRingChecker(enochecker.BaseChecker):
     port = 7353
     flag_count = 2
-    noise_count = 10
+    noise_count = 2
     havoc_count = 0
     service_name = "ringring"
 
@@ -35,20 +35,15 @@ class RingRingChecker(enochecker.BaseChecker):
         self.team_db[self.flag] = (session_id,)
 
     def getflag(self):
+        try:
+            db_row = self.team_db[self.flag]
+            self.logger.debug(f"Getting flag for session_id {db_row[0]}")
+        except KeyError:
+            return enochecker.Result.MUMBLE
+
         if self.flag_idx % 2 == 0:
-            try:
-                session_id = self.team_db[self.flag]
-                self.logger.debug(f"Getting flag for session_id {session_id[0]}")
-            except KeyError:
-                return enochecker.Result.MUMBLE
+            self.check_alarm(self.flag, db_row[0])
 
-            self.http_session.cookies.set('session_id', session_id[0])
-            self.logger.debug(self.http_session.cookies.get('session_id'))
-
-            req = self.http_get("/alarm")
-            self.logger.debug(req.text)
-            enochecker.assert_equals(200, req.status_code, "Alarm page is down.")
-            enochecker.assert_in(self.flag, req.text, "Flag is missing!")
         else:
             # TODO allow checker to access the / enpoint of the invoice app directly (not through the bot app)
             pass
@@ -80,14 +75,22 @@ class RingRingChecker(enochecker.BaseChecker):
         self.team_db[self.noise] = (session_id,)
 
     def getnoise(self):
-        pass
+        try:
+            db_row = self.team_db[self.noise]
+            self.logger.debug(f"Getting noise for session_id {db_row[0]}")
+        except KeyError:
+            return enochecker.Result.MUMBLE
+
+        if self.flag_idx % 2 == 0:
+            self.check_alarm(self.noise, db_row[0])
+        else:
+            pass
 
     def havoc(self):
         pass
 
     def exploit(self):
         pass
-        # self.team_db[self.flag] = (session_id,)
 
     def init_user(self):
         self.http_session.cookies.set('session_id', None)
@@ -112,6 +115,13 @@ class RingRingChecker(enochecker.BaseChecker):
         if message_in_response:
             enochecker.assert_in(payload['msg'], response.text,
                                  f"Could not find message in bot response. Payload: {payload}. Reponse: {response.text}")
+
+    def check_alarm(self, alarm_text, session_id):
+        self.http_session.cookies.set('session_id', session_id)
+
+        req = self.http_get("/alarm")
+        enochecker.assert_equals(200, req.status_code, "Alarm page is down.")
+        enochecker.assert_in(alarm_text, req.text, f"Cannot find alarm text {alarm_text} in resonse.")
 
 
 app = RingRingChecker.service
