@@ -1,4 +1,4 @@
-# ringring
+# ringring [![Build Status](https://droneci.sect.tu-berlin.de/api/badges/enowars/enowars4-service-ringring/status.svg)](https://droneci.sect.tu-berlin.de/enowars/enowars4-service-ringring)
 *ringring* is a hotel room service chat bot. <br>
 Currently, the user can set an alarm, order food or pay his open invoices by communicating with the bot. 
 A second service keeps track of proper invoicing, allowing the user to either pay direclty while ordering
