@@ -3,8 +3,10 @@ from flask_table import Table, Col
 from urllib.parse import urlparse
 from pathlib import Path
 import logging.config
+import threading
 import secrets
 import yaml
+import time
 import json
 
 ACCOUNT = 5
@@ -14,6 +16,7 @@ OUTSTANDING_INVOICES = 'InvoiceApp/accounting/outstanding-invoices.log'
 SETTLED_INVOICES = 'InvoiceApp/accounting/settled-invoices.log'
 
 app = Flask(__name__)
+lock = threading.Lock()
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -110,6 +113,7 @@ def request_bill():
         bill.append(invoice)
         total += float(invoice['amount'])
 
+    # threading.Thread(target=settle_bill_invoices, args=(bill,)).start()
     settle_bill_invoices(bill)
     return jsonify(total=total, items=bill, success=True)
 
@@ -120,14 +124,23 @@ def settle_bill_invoices(bill):
         invoice.pop('time')
         controller.account(f"invoice #{invoice['invoice_number']} settled", extra=invoice)
 
-    invoice_numbers = [invoice['invoice_number'] for invoice in bill]
+    invoice_numbers = [i['invoice_number'] for i in bill]
+    # with lock:
     with open(OUTSTANDING_INVOICES, 'r') as f:
+        print('############')
         journal = f.readlines()
+        print('%%%%%%%%%%%%%%%%')
 
     with open(OUTSTANDING_INVOICES, 'w') as f:
         for invoice in journal:
-            if json.loads(invoice)['invoice_number'] not in invoice_numbers:
-                f.write(invoice)
+            try:
+                if json.loads(invoice)['invoice_number'] not in invoice_numbers:
+                    f.write(invoice)
+            except json.JSONDecodeError as err:
+                logger.warning(journal)
+                snippet = err.doc
+                logger.warning(snippet)
+                logger.warning('err writing invoices')
 
 
 def validate_invoice(guest_name, invoice_item):
@@ -156,7 +169,18 @@ def accounted_invoices(guest_name=None, file_path=OUTSTANDING_INVOICES):
 
     with open(file_path) as journal:
         for entry in journal:
-            invoice = json.loads(entry)
+            try:
+                invoice = json.loads(entry)
+            except json.JSONDecodeError as err:
+                snippet = err.doc
+                logger.warning(err)
+                # start, stop = max(0, err.pos - 20), err.pos + 20
+                # if err.pos < 20:
+                #     snippet = '... ' + snippet
+                # if err.pos + 20 < len(err.doc):
+                #     snippet += ' ...'
+                # print(err)
+                print(snippet)
             if not guest_name or invoice['name'] == guest_name:
                 yield invoice
 
