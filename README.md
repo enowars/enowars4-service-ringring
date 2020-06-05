@@ -5,7 +5,7 @@ A second service keeps track of proper invoicing, allowing the user to either pa
 the service or to put the amount due on his room bill.
 
 ## Documentation
-- Two Python Flask Apps ([Main App](App) and [Invoice App](InvoiceApp)) with one [Postgres database](Postgres) as backend.
+- Two Python Flask Apps ([Main App](service/App) and [Invoice App](service/InvoiceApp)) with one [Postgres database](service/Postgres) as backend.
 - Currently two vulnerabilities
     - One inside the main app (look at Postgres)
     - One inside the invoice app (look at the logging)

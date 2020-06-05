@@ -13,9 +13,9 @@ docker rm -f $invoices || echo "Container $invoices already stopped and removed.
 
 if [[ $1 != "-s" && $1 != "--skip-build-step" ]]; then
     echo -e "\e[32m\nBuilding Dockerfiles...\e[0m"
-    docker build -t $app -f App/Dockerfile .
-    docker build -t $invoices -f InvoiceApp/Dockerfile .
-    docker build -t $db -f Postgres/Dockerfile .
+    docker build -t $app -f service/App/Dockerfile .
+    docker build -t $invoices -f service/InvoiceApp/Dockerfile .
+    docker build -t $db -f service/Postgres/Dockerfile .
 fi
 
 echo -e "\e[32m\nStarting containers...\e[0m"

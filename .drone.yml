@@ -8,7 +8,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
-    dockerfile: App/Dockerfile
+    dockerfile: service/App/Dockerfile
     repo: registry:5000/ringring-service
     registry: registry:5000
     insecure: true
@@ -16,7 +16,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
-    dockerfile: InvoiceApp/Dockerfile
+    dockerfile: service/InvoiceApp/Dockerfile
     repo: registry:5000/ringring-service-invoices
     registry: registry:5000
     insecure: true
@@ -24,7 +24,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
-    dockerfile: Postgres/Dockerfile
+    dockerfile: service/Postgres/Dockerfile
     repo: registry:5000/ringring-service-postgres
     registry: registry:5000
     insecure: true
