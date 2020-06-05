@@ -85,8 +85,7 @@ steps:
     - rm -rf ringring/
     - cp -r ../service/ ringring/
     - git add ringring/
-    - git commit -m 'Update ringring service'
-    - git push origin HEAD:master
+    - git commit -m 'Update ringring service' && git push origin HEAD:master || echo -e "\e[32m\nSkipping git push. No changes in service.\e[0m"
 
     # push checker changes
     - cd -
@@ -95,8 +94,7 @@ steps:
     - rm -rf ringring/
     - cp -r ../checker/ ringring/
     - git add ringring/
-    - git commit -m 'Update ringring checker'
-    - git push origin HEAD:master
+    - git commit -m 'Update ringring checker' && git push origin HEAD:master || echo -e "\e[32m\nSkipping git push. No changes in checker.\e[0m"
 
 - name: trigger-vm-image-creation
   image: plugins/downstream
