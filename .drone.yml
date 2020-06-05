@@ -8,6 +8,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
+    context: service
     dockerfile: service/App/Dockerfile
     repo: registry:5000/ringring-service
     registry: registry:5000
@@ -16,6 +17,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
+    context: service
     dockerfile: service/InvoiceApp/Dockerfile
     repo: registry:5000/ringring-service-invoices
     registry: registry:5000
@@ -24,6 +26,7 @@ steps:
   image: plugins/docker
   network_mode: registry-network
   settings:
+    context: service
     dockerfile: service/Postgres/Dockerfile
     repo: registry:5000/ringring-service-postgres
     registry: registry:5000
