@@ -2,6 +2,7 @@ import enochecker
 import random
 import json
 from requests import exceptions
+import re
 
 AVAILABLE_FOOD = ['pizza', 'bred', 'fish']
 
@@ -25,14 +26,20 @@ class RingRingChecker(enochecker.BaseChecker):
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
                                'msg': random.choice(['room-bill', 'now'])}
             self.call_bot_response(payment_payload, mode='alarm flag payment', message_in_response=False)
+            self.team_db[self.flag] = (session_id,)
 
         else:
             payload = {'msg': self.flag,
                        'state': json.dumps({'mode': 'food_order', 'order_step': '2', 'order': 'bred'})}
-            self.call_bot_response(payload, mode='invoice flag')
+            message = self.call_bot_response(payload, mode='invoice flag')
+            invoice_number = re.findall('invoice number is (\d*)', message)
+            if len(invoice_number) != 1:
+                return enochecker.Result.MUMBLE
+            else:
+                invoice_number = invoice_number[0]
+            self.team_db[self.flag] = (session_id, invoice_number)
 
         self.logger.debug("Flag {} up.".format(self.flag))
-        self.team_db[self.flag] = (session_id,)
 
     def getflag(self):
         try:
@@ -43,10 +50,8 @@ class RingRingChecker(enochecker.BaseChecker):
 
         if self.flag_idx % 2 == 0:
             self.check_alarm(self.flag, db_row[0])
-
         else:
-            # TODO allow checker to access the / enpoint of the invoice app directly (not through the bot app)
-            pass
+            self.check_invoice_number(db_row[1], db_row[0], self.flag)
 
     def putnoise(self):
         self.logger.debug(f"Putting Noise {self.noise} ...")
@@ -66,13 +71,19 @@ class RingRingChecker(enochecker.BaseChecker):
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
                                'msg': random.choice(['room-bill', 'now'])}
             self.call_bot_response(payment_payload, mode='alarm noise payment', message_in_response=False)
+            self.team_db[self.noise] = (session_id,)
+
         else:
             payload = {'msg': self.noise,
                        'state': json.dumps(
                            {'mode': 'food_order', 'order_step': '2', 'order': random.choice(AVAILABLE_FOOD)})}
-            self.call_bot_response(payload, mode='invoice noise')
-
-        self.team_db[self.noise] = (session_id,)
+            message = self.call_bot_response(payload, mode='invoice noise')
+            invoice_number = re.findall('invoice number is (\d*)', message)
+            if len(invoice_number) != 1:
+                return enochecker.Result.MUMBLE
+            else:
+                invoice_number = invoice_number[0]
+            self.team_db[self.noise] = (session_id, invoice_number)
 
     def getnoise(self):
         try:
@@ -84,7 +95,7 @@ class RingRingChecker(enochecker.BaseChecker):
         if self.flag_idx % 2 == 0:
             self.check_alarm(self.noise, db_row[0])
         else:
-            pass
+            self.check_invoice_number(db_row[1], db_row[0], self.noise)
 
     def havoc(self):
         pass
@@ -115,6 +126,7 @@ class RingRingChecker(enochecker.BaseChecker):
         if message_in_response:
             enochecker.assert_in(payload['msg'], response.text,
                                  f"Could not find message in bot response. Payload: {payload}. Reponse: {response.text}")
+        return response.text
 
     def check_alarm(self, alarm_text, session_id):
         self.http_session.cookies.set('session_id', session_id)
@@ -122,6 +134,18 @@ class RingRingChecker(enochecker.BaseChecker):
         req = self.http_get("/alarm")
         enochecker.assert_equals(200, req.status_code, "Alarm page is down.")
         enochecker.assert_in(alarm_text, req.text, f"Cannot find alarm text {alarm_text} in resonse.")
+
+    def check_invoice_number(self, invoice_number, session_id, expected_text):
+        self.http_session.cookies.set('session_id', session_id)
+        payload = {'state': json.dumps({'mode': 'invoice_info'}),
+                   'msg': invoice_number}
+        try:
+            req = self.http_get('/get_bot_response', params=payload)
+        except exceptions.RequestException:
+            self.logger.debug(f"Could not get bot response. Payload: {payload}")
+            raise enochecker.BrokenServiceException("/AddAttack failed")
+        enochecker.assert_equals(200, req.status_code, "Could not get invoice information.")
+        enochecker.assert_in(expected_text, req.text, "Could not find expected invoice text.")
 
 
 app = RingRingChecker.service
