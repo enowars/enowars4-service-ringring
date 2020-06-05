@@ -74,7 +74,7 @@ def add_to_bill():
 
     controller = get_invoice_controller(payment_method=payment_method)
     controller.account(f'invoice #{invoice_number} accounted', extra=invoice)
-    return jsonify(success=True)
+    return jsonify(success=True, invoice_number=invoice_number)
 
 
 @app.route('/storno', methods=['POST'])
@@ -112,6 +112,19 @@ def request_bill():
 
     settle_bill_invoices(bill)
     return jsonify(total=total, items=bill, success=True)
+
+
+@app.route('/invoice_details')
+def invoice_details():
+    invoice_number = request.args.get('invoice_number')
+    guest_name = request.args.get('guest_name')
+    logger.info(f"Requesting invoice '{invoice_number}'...")
+    if not invoice_number:
+        logger.warning(f"Aborting bill request - parameter invoice number '{invoice_number}' is not valid (HTTP 404).")
+        return jsonify(success=False), 404
+
+    invoice = get_invoice_by_number(invoice_number, guest_name)
+    return jsonify(invoice=invoice, success=True)
 
 
 def settle_bill_invoices(bill):
@@ -162,6 +175,16 @@ def accounted_invoices(guest_name=None, file_path=OUTSTANDING_INVOICES):
             invoice = json.loads(entry)
             if not guest_name or invoice['name'] == guest_name:
                 yield invoice
+
+
+def get_invoice_by_number(invoice_number, guest_name):
+    for file_path in [OUTSTANDING_INVOICES, SETTLED_INVOICES]:
+        with open(file_path) as journal:
+            for entry in journal:
+                invoice = json.loads(entry)
+                invoice['settled'] = True if file_path == SETTLED_INVOICES else False
+                if invoice['invoice_number'] == invoice_number and invoice['name'] == guest_name:
+                    return invoice
 
 
 def get_accounted_invoices(guest_name=None, include_settled=False):

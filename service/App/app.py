@@ -3,7 +3,7 @@ import re
 import datetime
 import logging
 from utils import debug, db_helper
-from utils.invoices_connector import add_to_invoice, get_invoices, request_bill
+from utils.invoices_connector import add_to_invoice, get_invoices, request_bill, get_invoice_by_invoice_number
 import json
 import uuid
 from flask_table import Table, Col
@@ -46,14 +46,18 @@ def get_bot_response():
     if (state and state['mode'] == 'alarm') or (re.search('alarm', user_text)):
         return set_alarm(user_text, state)
 
-    elif re.search('lonely', user_text) or re.search('bored', user_text):
+    elif re.search('lonely|bored', user_text):
         return {'response': 'Go to /guests to see how other guests are doing.'}
 
     elif re.search('food', user_text) or (state and state['mode'] == 'food_order'):
         return order_food(user_text, state)
 
-    elif (state and state['mode'] == 'invoice') or (re.search('invoice', user_text)):
+    elif (state and state['mode'] == 'invoice') or (re.search('pay', user_text)):
         return make_invoice(user_text, state)
+
+    elif (state and state['mode'] == 'invoice_info') or re.search('invoice info', user_text):
+        return get_invoice_info(user_text, state)
+
     else:
         # logger.debug('Something very secret.')
         return {'response': '''I have no service registered to that request. These are the services that I can provoide: <br>
@@ -143,8 +147,8 @@ def set_alarm(user_text, state):
                 return {'response': 'This was not a valid input. Try [now] or [room-bill].',
                         'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
             else:
-                add_to_invoice(session_id, 'alarm', payment_method=user_text)
-                return {'response': 'Perfect. Thank you very much.',
+                invoice_number =add_to_invoice(session_id, 'alarm', payment_method=user_text)
+                return {'response': f'Perfect. Thank you very much. Your invoice number is: {invoice_number}',
                         'state': json.dumps({'mode': 'main_menu'})}
         else:
             try:
@@ -198,7 +202,7 @@ def order_food(user_text, state):
         if state['order_step'] == '1':
             if user_text not in AVAILABLE_FOOD:
                 return {
-                    'response': 'I did not quite get that. Please choose one of <br> {"<br>".join(AVAILABLE_FOOD)}.',
+                    'response': f'I did not quite get that. Please choose one of <br> {"<br>".join(AVAILABLE_FOOD)}.',
                     'state': json.dumps({'mode': 'food_order', 'order_step': '1'})}
             else:
                 return {'response': 'Anything you want to add to your order? Anything we need to know?',
@@ -209,8 +213,9 @@ def order_food(user_text, state):
                 note = None
             else:
                 note = user_text
-            add_to_invoice(session_id, order, notes=note)
-            return {'response': f'Thanks a lot for your order. The Microwave is spinning! We noted: {note}',
+            invoice_number = add_to_invoice(session_id, order, notes=note)
+            return {'response': f"""Thanks a lot for your order. The Microwave is spinning! We noted: {note}. 
+                                    Your invoice number is {invoice_number}.""",
                     'state': json.dumps({'mode': 'main_menu'})}
 
     else:
@@ -218,6 +223,22 @@ def order_food(user_text, state):
                     {'<br>'.join(AVAILABLE_FOOD)}.<br>
                     I must admit they are all very good. It is going to be a hard choice.""",
                 'state': json.dumps({'mode': 'food_order', 'order_step': '1'})}
+
+
+def get_invoice_info(user_text, state):
+    session_id = request.cookies.get('session_id')
+    mode = state['mode']
+    if mode == 'invoice_info':
+        invoice_number = user_text
+        invoice_info = get_invoice_by_invoice_number(invoice_number, session_id)
+        if not invoice_info:
+            response = f'Your invoice number {invoice_number} was not valid. sorry.'
+        else:
+            response = f'Here you go: {invoice_info}'
+        return {'response': response}
+    else:
+        return {'response': 'Please give us the number of your invoice that you want to have more information on.',
+                'state': json.dumps({'mode': 'invoice_info'})}
 
 
 if __name__ == '__main__':
