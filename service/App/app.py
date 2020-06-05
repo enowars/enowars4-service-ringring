@@ -235,7 +235,8 @@ def get_invoice_info(user_text, state):
             response = f'Your invoice number {invoice_number} was not valid. sorry.'
         else:
             response = f'Here you go: {invoice_info}'
-        return {'response': response}
+        return {'response': response,
+                'state': json.dumps({'mode': 'main_menu'})}
     else:
         return {'response': 'Please give us the number of your invoice that you want to have more information on.',
                 'state': json.dumps({'mode': 'invoice_info'})}

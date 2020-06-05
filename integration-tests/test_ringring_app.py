@@ -159,7 +159,7 @@ def test_invoice_generation():
     session = requests.session()
     session.get(URL)
     test_add_alarm('invoice_test_alarm', session=session)
-    step_1_params = {'msg': 'invoice'}
+    step_1_params = {'msg': 'pay'}
     url = URL + '/get_bot_response'
 
     r = session.get(url, params=step_1_params)

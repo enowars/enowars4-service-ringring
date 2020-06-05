@@ -24,7 +24,6 @@ def add_to_invoice(guest_name, service, payment_method=PAYMENT_ON_ACCOUNT, notes
     return resp.json()['invoice_number']
 
 
-
 def get_invoices(guest_name):
     if 'INVOICE_HOST' not in os.environ:
         logger.error(f"Could not get invoice for '{guest_name}''. INVOICE_HOST variabe is missing.")
