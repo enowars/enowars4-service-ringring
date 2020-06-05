@@ -1,7 +1,7 @@
 FROM python:3.8.1
 LABEL version="0.0.1"
 
-COPY service/InvoiceApp /InvoiceApp
+COPY InvoiceApp /InvoiceApp
 # WORKDIR /InvoiceApp
 
 RUN pip install --upgrade pip && \

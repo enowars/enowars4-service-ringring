@@ -1,0 +1,25 @@
+version: '3.4'
+
+services:
+  ringring:
+    build:
+      context: .
+      dockerfile: App/Dockerfile
+    environment:
+    - PGPASSWORD=mysecretpassword
+    - PGHOST=ringring-postgres
+    - INVOICE_HOST=ringring-invoices
+    ports:
+      - "7353:7353"
+  ringring-invoices:
+    build:
+      context: .
+      dockerfile: InvoiceApp/Dockerfile
+  ringring-postgres:
+    build:
+      context: .
+      dockerfile: Postgres/Dockerfile
+    environment:
+    - POSTGRES_PASSWORD=mysecretpassword
+    - POSTGRES_USER=ringring
+    - POSTGRES_DB=service
