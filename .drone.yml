@@ -86,6 +86,7 @@ steps:
     - git push origin HEAD:master
 
     # push checker changes
+    - cd -
     - git clone git@github.com:enowars/enowars4-vulnbox-checkers.git
     - cd enowars4-vulnbox-checkers
     - rm -rf ringring/
