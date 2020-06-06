@@ -4,7 +4,7 @@ type: docker
 name: build
 
 steps:
-- name: publish-docker
+- name: publish-docker-main-app
   image: plugins/docker
   network_mode: registry-network
   settings:
@@ -62,6 +62,13 @@ steps:
   commands:
   - pip install --upgrade pip && pip install -r integration-tests/requirements.txt
   - pytest --tb=short -l -m "not no_pipeline_support"
+
+
+---
+kind: pipeline
+type: docker
+name: deploy
+
 
 - name: publish-service-sources
   image: alpine/git
