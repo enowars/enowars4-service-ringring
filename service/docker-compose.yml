@@ -11,10 +11,12 @@ services:
     - INVOICE_HOST=ringring-invoices
     ports:
       - "7353:7353"
+    container_name: ringring
   ringring-invoices:
     build:
       context: .
       dockerfile: InvoiceApp/Dockerfile
+    container_name: ringring-invoices
   ringring-postgres:
     build:
       context: .
@@ -23,3 +25,4 @@ services:
     - POSTGRES_PASSWORD=mysecretpassword
     - POSTGRES_USER=ringring
     - POSTGRES_DB=service
+    container_name: ringring-postgres

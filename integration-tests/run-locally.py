@@ -26,4 +26,4 @@ if __name__ == "__main__":
     os.environ["PGHOST"] = "localhost"
     os.environ["PGPASSWORD"] = "mysecretpassword"
     start_dockerized_apps()
-    subprocess.call("pytest -v", shell=True)
+    subprocess.call("pytest -v --tb=short", shell=True)

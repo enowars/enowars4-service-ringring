@@ -10,13 +10,13 @@ handlers:
     stream: ext://sys.stdout
   settled_invoices:
     class: logging.FileHandler
-    filename: InvoiceApp/accounting/settled-invoices.log
+    filename: accounting/settled-invoices.log
     filters: [settled_invoices_only]
     mode: a
     formatter: invoice
   outstanding_invoices:
     class: logging.FileHandler
-    filename: InvoiceApp/accounting/outstanding-invoices.log
+    filename: accounting/outstanding-invoices.log
     filters: [outstanding_invoices_only]
     mode: a
     formatter: invoice

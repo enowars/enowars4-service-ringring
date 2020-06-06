@@ -3,8 +3,8 @@
 set -e
 
 app="ringring"
-invoices="invoices"
-db="postgres"
+invoices="ringring-invoices"
+db="ringring-postgres"
 
 echo -e "\e[32m\nStopping & removing containers...\e[0m"
 docker rm -f $db || echo "Container $db already stopped and removed."

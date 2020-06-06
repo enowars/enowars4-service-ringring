@@ -81,7 +81,7 @@ def test_request_bill_error_handling():
 @pytest.mark.no_pipeline_support
 def test_setting_log_level():
     client = docker.from_env()
-    container = client.containers.get('invoices')
+    container = client.containers.get('ringring-invoices')
     old_logs = len(container.logs().decode().splitlines())
 
     params = {'log-level': 'INFO', 'name': 'whoever'}
@@ -97,7 +97,7 @@ def test_setting_log_level():
 @pytest.mark.no_pipeline_support
 def test_invoice_log_accounting():
     client = docker.from_env()
-    container = client.containers.get('invoices')
+    container = client.containers.get('ringring-invoices')
     old_logs = container.logs().decode()
 
     add_invoice_to_accounting_log('someone', 'pizza')

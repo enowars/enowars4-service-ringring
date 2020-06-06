@@ -10,8 +10,8 @@ import json
 ACCOUNT = 5
 PAYMENT_ON_ACCOUNT = 'room-bill'
 PAYMENT_SETTLED = 'cash'
-OUTSTANDING_INVOICES = 'InvoiceApp/accounting/outstanding-invoices.log'
-SETTLED_INVOICES = 'InvoiceApp/accounting/settled-invoices.log'
+OUTSTANDING_INVOICES = 'accounting/outstanding-invoices.log'
+SETTLED_INVOICES = 'accounting/settled-invoices.log'
 
 app = Flask(__name__)
 logger = logging.getLogger()
@@ -197,7 +197,7 @@ def get_accounted_invoices(guest_name=None, include_settled=False):
 
 
 def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
-    with open('InvoiceApp/logger-config.yml', 'r') as yaml_file:
+    with open('logger-config.yml', 'r') as yaml_file:
         config = yaml_file.read().format(payment_method=payment_method, level=log_level)
         config = yaml.load(config, Loader=yaml.Loader)
         logging.addLevelName(ACCOUNT, 'ACCOUNT')
