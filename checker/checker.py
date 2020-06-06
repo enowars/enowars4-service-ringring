@@ -25,7 +25,7 @@ class RingRingChecker(enochecker.BaseChecker):
 
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
                                'msg': random.choice(['room-bill', 'now'])}
-            self.call_bot_response(payment_payload, mode='alarm flag payment', message_in_response=False)
+            self.call_bot_response(payment_payload, mode='alarm flag payment')
             self.team_db[self.flag] = (session_id,)
 
         else:
@@ -70,7 +70,7 @@ class RingRingChecker(enochecker.BaseChecker):
 
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
                                'msg': random.choice(['room-bill', 'now'])}
-            self.call_bot_response(payment_payload, mode='alarm noise payment', message_in_response=False)
+            self.call_bot_response(payment_payload, mode='alarm noise payment')
             self.team_db[self.noise] = (session_id,)
 
         else:
@@ -115,7 +115,7 @@ class RingRingChecker(enochecker.BaseChecker):
         enochecker.assert_equals(200, response.status_code, "Service not reachable")
         return session_id
 
-    def call_bot_response(self, payload, mode, message_in_response=True):
+    def call_bot_response(self, payload, mode):
         self.logger.debug(f"Putting {mode}...")
         try:
             response = self.http_get("/get_bot_response", params=payload)
@@ -123,9 +123,6 @@ class RingRingChecker(enochecker.BaseChecker):
             self.logger.debug(f"Could not get bot response. Payload: {payload}")
             raise enochecker.BrokenServiceException("/AddAttack failed")
 
-        if message_in_response:
-            enochecker.assert_in(payload['msg'], response.text,
-                                 f"Could not find message in bot response. Payload: {payload}. Reponse: {response.text}")
         return response.text
 
     def check_alarm(self, alarm_text, session_id):

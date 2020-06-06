@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  ringring-checker-backend:
+  ringring-checker:
     build: .
     ports:
       - 7355:8000
@@ -14,7 +14,7 @@ services:
   ringring-checker-db:
     image: mongo
     volumes:
-      - ./checker_db_data:/data/db
+      - ./ringring-checker-db:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: enoislove
       MONGO_INITDB_ROOT_PASSWORD: enoislife
