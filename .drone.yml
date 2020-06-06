@@ -69,7 +69,7 @@ kind: pipeline
 type: docker
 name: deploy
 
-
+steps:
 - name: publish-service-sources
   image: alpine/git
   environment:
