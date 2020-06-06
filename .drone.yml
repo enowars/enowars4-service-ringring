@@ -63,6 +63,30 @@ steps:
   - pip install --upgrade pip && pip install -r integration-tests/requirements.txt
   - pytest --tb=short -l -m "not no_pipeline_support"
 
+services:
+- name: ringring
+  image: localhost:5000/ringring-service
+  environment:
+    PGPASSWORD: mysecretpassword
+    PGHOST: postgres
+    INVOICE_HOST: invoices
+- name: invoices
+  image: localhost:5000/ringring-service-invoices
+- name: postgres
+  image: localhost:5000/ringring-service-postgres
+  environment:
+    POSTGRES_PASSWORD: mysecretpassword
+    POSTGRES_USER: ringring
+    POSTGRES_DB: service
+
+
+volumes:
+- name: dockersock
+  host:
+    path: /var/run/docker.sock
+
+depends_on:
+- build
 
 ---
 kind: pipeline
@@ -114,26 +138,5 @@ steps:
       - FlorianNachtigall/drone-testing
       - enowars/Enowars4DevOps
 
-services:
-- name: ringring
-  image: localhost:5000/ringring-service
-  environment:
-    PGPASSWORD: mysecretpassword
-    PGHOST: postgres
-    INVOICE_HOST: invoices
-- name: invoices
-  image: localhost:5000/ringring-service-invoices
-- name: postgres
-  image: localhost:5000/ringring-service-postgres
-  environment:
-    POSTGRES_PASSWORD: mysecretpassword
-    POSTGRES_USER: ringring
-    POSTGRES_DB: service
-
-volumes:
-- name: dockersock
-  host:
-    path: /var/run/docker.sock
-
 depends_on:
-- build
+- test
