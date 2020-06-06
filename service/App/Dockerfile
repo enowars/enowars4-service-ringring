@@ -6,6 +6,6 @@ WORKDIR /service-ringring
 RUN pip install --upgrade pip && \
     pip install -r /service-ringring/requirements.txt
 
-ENTRYPOINT ["python", "/service-ringring/app.py"]
-
 EXPOSE 7353
+
+ENTRYPOINT ["python", "/service-ringring/app.py"]

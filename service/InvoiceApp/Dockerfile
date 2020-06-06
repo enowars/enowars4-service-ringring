@@ -7,6 +7,6 @@ COPY InvoiceApp /InvoiceApp
 RUN pip install --upgrade pip && \
     pip install -r /InvoiceApp/requirements.txt
 
-ENTRYPOINT ["python", "/InvoiceApp/app.py"]
-
 EXPOSE 7354
+
+ENTRYPOINT ["python", "/InvoiceApp/app.py"]
