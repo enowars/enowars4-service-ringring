@@ -1,3 +1,6 @@
+import multiprocessing
+
 worker_class = "eventlet"
-workers = 8
+workers = multiprocessing.cpu_count()*2+1
+
 bind = "0.0.0.0:7354"
