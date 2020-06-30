@@ -142,7 +142,9 @@ class RingRingChecker(enochecker.BaseChecker):
             self.logger.debug(f"Could not get bot response. Payload: {payload}")
             raise enochecker.BrokenServiceException("/AddAttack failed")
         enochecker.assert_equals(200, req.status_code, "Could not get invoice information.")
-        enochecker.assert_in(expected_text, req.text, "Could not find expected invoice text.")
+        data = req.json()
+        enochecker.assert_in(expected_text, data['response'].replace('\\u200d', '\u200d'),
+                             f"Could not find expected invoice text {expected_text} in response {res.json()}.")
 
 
 app = RingRingChecker.service
