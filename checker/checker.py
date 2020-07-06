@@ -103,10 +103,8 @@ class RingRingChecker(enochecker.BaseChecker):
     def exploit(self):
         pass
 
-    def init_user(self, make_vip= False):
+    def init_user(self, make_vip=False):
         self.http_session.cookies.set('session_id', None)
-        if make_vip:
-            self.http_post(route='/make_me_a_vip')
         try:
             response = self.http_get(route='/')
             session_id = response.cookies.get('session_id')
@@ -115,6 +113,10 @@ class RingRingChecker(enochecker.BaseChecker):
             self.logger.debug("Service not reachable.")
             raise enochecker.OfflineException()
         enochecker.assert_equals(200, response.status_code, "Service not reachable")
+
+        if make_vip:
+            self.http_post(route='/make_me_a_vip')
+
         return session_id
 
     def call_bot_response(self, payload, mode):
