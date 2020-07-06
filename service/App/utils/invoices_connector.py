@@ -42,7 +42,6 @@ def get_invoices(guest_name):
     invoices = response.json()['invoices']
     for invoice in invoices:
         invoice['name'] = guest_name
-        invoice.pop('note')
 
     return invoices
 

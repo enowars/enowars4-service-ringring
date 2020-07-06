@@ -46,7 +46,7 @@ def home():
         return jsonify(success=False), 404
 
     controller.info(f"Generating invoice overview for guest '{guest_name}'...")
-    guest_invoices = get_accounted_invoices(guest_name=guest_name, include_settled=True)
+    guest_invoices = get_invoice_items(guest_name=guest_name, include_settled=True)
     return jsonify(invoices=guest_invoices, success=True)
 
 
@@ -189,12 +189,15 @@ def get_invoice_by_number(invoice_number, guest_name):
                     return invoice
 
 
-def get_accounted_invoices(guest_name=None, include_settled=False):
+def get_invoice_items(guest_name=None, include_settled=False):
     invoices = list(accounted_invoices(guest_name=guest_name))
     if include_settled:
         invoices.extend(
             accounted_invoices(guest_name=guest_name, file_path=SETTLED_INVOICES))
     logger.info(f"Returning invoices for {guest_name}: {invoices}")
+    for invoice in invoices:
+        invoice.pop('invoice_number')
+        invoice.pop('note')
     return invoices
 
 
