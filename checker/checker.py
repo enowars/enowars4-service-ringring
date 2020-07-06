@@ -106,7 +106,7 @@ class RingRingChecker(enochecker.BaseChecker):
     def init_user(self, make_vip= False):
         self.http_session.cookies.set('session_id', None)
         if make_vip:
-            self.http_get(route='/make_me_vip')
+            self.http_post(route='/make_me_a_vip')
         try:
             response = self.http_get(route='/')
             session_id = response.cookies.get('session_id')
