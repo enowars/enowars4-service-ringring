@@ -75,7 +75,7 @@ def get_invoice_by_invoice_number(invoice_number, session_id):
 
     if response.status_code != 200:
         logger.warning(f"Request to {url} with params {params} did not return successfully.")
-        return []
+        return {}
     invoice = response.json()['invoice']
 
     return invoice

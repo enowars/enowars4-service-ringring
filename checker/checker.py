@@ -52,6 +52,7 @@ class RingRingChecker(enochecker.BaseChecker):
             self.check_alarm(self.flag, db_row[0])
         else:
             self.check_invoice_number(db_row[1], db_row[0], self.flag)
+            self.request_bill()
 
     def putnoise(self):
         self.logger.debug(f"Putting Noise {self.noise} ...")
@@ -125,6 +126,16 @@ class RingRingChecker(enochecker.BaseChecker):
             response = self.http_get("/get_bot_response", params=payload)
         except exceptions.RequestException:
             self.logger.debug(f"Could not get bot response. Payload: {payload}")
+            raise enochecker.BrokenServiceException("/AddAttack failed")
+
+        return response.text
+
+    def request_bill(self):
+        payload = {'msg': 'y', 'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
+        try:
+            response = self.http_get("/get_bot_response", params=payload)
+        except exceptions.RequestException:
+            self.logger.debug(f"Could not request bill. Payload: {payload}")
             raise enochecker.BrokenServiceException("/AddAttack failed")
 
         return response.text
