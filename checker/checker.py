@@ -148,7 +148,7 @@ class RingRingChecker(enochecker.BaseChecker):
         enochecker.assert_equals(200, req.status_code, "Could not get invoice information.")
         data = req.json()
         enochecker.assert_in(expected_text, data['response'].replace('\\u200d', '\u200d'),
-                             f"Could not find expected invoice text {expected_text} in response {res.json()}.")
+                             f"Could not find expected invoice text {expected_text} in response {data['response']}.")
 
 
 app = RingRingChecker.service
