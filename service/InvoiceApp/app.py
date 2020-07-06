@@ -105,13 +105,15 @@ def request_bill():
         return jsonify(success=False), 404
 
     bill = []
+    items = []
     total = 0.0
     for invoice in accounted_invoices(guest_name):
         bill.append(invoice)
+        items.append(invoice['item'])
         total += float(invoice['amount'])
 
     settle_bill_invoices(bill)
-    return jsonify(total=total, items=bill, success=True)
+    return jsonify(total=total, items=items, success=True)
 
 
 @app.route('/invoice_details')

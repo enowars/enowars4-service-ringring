@@ -147,7 +147,7 @@ def set_alarm(user_text, state):
                 return {'response': 'This was not a valid input. Try [now] or [room-bill].',
                         'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
             else:
-                invoice_number =add_to_invoice(session_id, 'alarm', payment_method=user_text)
+                invoice_number = add_to_invoice(session_id, 'alarm', payment_method=user_text)
                 return {'response': f'Perfect. Thank you very much. Your invoice number is: {invoice_number}',
                         'state': json.dumps({'mode': 'main_menu'})}
         else:
