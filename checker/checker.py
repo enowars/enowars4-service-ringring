@@ -15,7 +15,7 @@ class RingRingChecker(enochecker.BaseChecker):
     service_name = "ringring"
 
     def putflag(self):
-        session_id = self.init_user()
+        session_id = self.init_user(make_vip=True)
 
         if self.flag_idx % 2 == 0:
             payload = {'state': json.dumps(
@@ -103,8 +103,10 @@ class RingRingChecker(enochecker.BaseChecker):
     def exploit(self):
         pass
 
-    def init_user(self):
+    def init_user(self, make_vip= False):
         self.http_session.cookies.set('session_id', None)
+        if make_vip:
+            self.http_get(route='/make_me_vip')
         try:
             response = self.http_get(route='/')
             session_id = response.cookies.get('session_id')
