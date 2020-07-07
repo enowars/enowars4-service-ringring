@@ -29,6 +29,7 @@ class RingRingChecker(enochecker.BaseChecker):
             self.team_db[self.flag] = (session_id,)
 
         else:
+            self.request_bill()
             payload = {'msg': self.flag,
                        'state': json.dumps({'mode': 'food_order', 'order_step': '2', 'order': 'bred'})}
             message = self.call_bot_response(payload, mode='invoice flag')
@@ -52,7 +53,6 @@ class RingRingChecker(enochecker.BaseChecker):
             self.check_alarm(self.flag, db_row[0])
         else:
             self.check_invoice_number(db_row[1], db_row[0], self.flag)
-            self.request_bill()
 
     def putnoise(self):
         self.logger.debug(f"Putting Noise {self.noise} ...")
