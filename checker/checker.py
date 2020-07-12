@@ -61,7 +61,7 @@ class RingRingChecker(enochecker.BaseChecker):
         try:
             assert session_id
         except AssertionError:
-            raise enochecker.BrokenServiceException("session_id is not set.")
+            raise enochecker.BrokenServiceException("session_id could not be set.")
 
         if self.flag_idx % 2 == 0:
             payload = {'msg': self.noise, 'state': json.dumps(
@@ -113,7 +113,8 @@ class RingRingChecker(enochecker.BaseChecker):
         except exceptions.RequestException:
             self.logger.debug("Service not reachable.")
             raise enochecker.OfflineException()
-        enochecker.assert_equals(200, response.status_code, "Service not reachable")
+        enochecker.assert_equals(200, response.status_code,
+                                 "Could not initialize the user. Service did not return with expected response code")
 
         if make_vip:
             self.http_post(route='/make_me_a_vip')
@@ -126,7 +127,7 @@ class RingRingChecker(enochecker.BaseChecker):
             response = self.http_get("/get_bot_response", params=payload)
         except exceptions.RequestException:
             self.logger.debug(f"Could not get bot response. Payload: {payload}")
-            raise enochecker.BrokenServiceException("/AddAttack failed")
+            raise enochecker.BrokenServiceException("Could not get bot response.")
 
         return response.text
 
@@ -136,7 +137,7 @@ class RingRingChecker(enochecker.BaseChecker):
             response = self.http_get("/get_bot_response", params=payload)
         except exceptions.RequestException:
             self.logger.debug(f"Could not request bill. Payload: {payload}")
-            raise enochecker.BrokenServiceException("/AddAttack failed")
+            raise enochecker.BrokenServiceException("Could not request bill.")
 
         return response.text
 
@@ -144,8 +145,9 @@ class RingRingChecker(enochecker.BaseChecker):
         self.http_session.cookies.set('session_id', session_id)
 
         req = self.http_get("/alarm")
-        enochecker.assert_equals(200, req.status_code, "Alarm page is down.")
-        enochecker.assert_in(alarm_text, req.text, f"Cannot find alarm text {alarm_text} in resonse.")
+        enochecker.assert_equals(200, req.status_code,
+                                 "Getting the alarm page did not return the expected response code.")
+        enochecker.assert_in(alarm_text, req.text, f"Cannot find expected alarm text in response.")
 
     def check_invoice_number(self, invoice_number, session_id, expected_text):
         self.http_session.cookies.set('session_id', session_id)
@@ -155,11 +157,12 @@ class RingRingChecker(enochecker.BaseChecker):
             req = self.http_get('/get_bot_response', params=payload)
         except exceptions.RequestException:
             self.logger.debug(f"Could not get bot response. Payload: {payload}")
-            raise enochecker.BrokenServiceException("/AddAttack failed")
-        enochecker.assert_equals(200, req.status_code, "Could not get invoice information.")
+            raise enochecker.BrokenServiceException("Could not check invoice number. Seems like the service is broken.")
+        enochecker.assert_equals(200, req.status_code,
+                                 "The request did not return with the expected response code. Verify, that the invoice service is returning the desired response.")
         data = req.json()
         enochecker.assert_in(expected_text, data['response'].replace('\\u200d', '\u200d'),
-                             f"Could not find expected invoice text {expected_text} in response {data['response']}.")
+                             f"Could not find expected invoice in response.")
 
 
 app = RingRingChecker.service
