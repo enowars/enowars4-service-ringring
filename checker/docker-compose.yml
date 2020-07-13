@@ -7,14 +7,7 @@ services:
       - 7355:8000
     environment:
      - MONGO_ENABLED=1
-     - MONGO_HOST=ringring-checker-db
-     - MONGO_PORT=27017
+     - MONGO_HOST=172.16.7.10
+     - MONGO_PORT=27020
      - MONGO_USER=enoislove
      - MONGO_PASSWORD=enoislife
-  ringring-checker-db:
-    image: mongo
-    volumes:
-      - ./ringring-checker-db:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: enoislove
-      MONGO_INITDB_ROOT_PASSWORD: enoislife
