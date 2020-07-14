@@ -2,3 +2,4 @@ Dockerfile
 docker-compose.yml
 ringring-checker-db
 .dockerignore
+.git

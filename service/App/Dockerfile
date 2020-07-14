@@ -1,11 +1,11 @@
 FROM python:3.8.1
 LABEL version="0.0.1"
 
+COPY App/requirements.txt /service-ringring/
+RUN pip3 install -r /service-ringring/requirements.txt
+
 COPY App /service-ringring
 WORKDIR /service-ringring
-
-RUN pip install --upgrade pip && \
-    pip install -r requirements.txt
 
 EXPOSE 7353
 
