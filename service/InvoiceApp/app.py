@@ -6,6 +6,7 @@ import logging.config
 import secrets
 import yaml
 import json
+import sys
 
 ACCOUNT = 5
 PAYMENT_ON_ACCOUNT = 'room-bill'
@@ -16,6 +17,7 @@ SETTLED_INVOICES = 'accounting/settled-invoices.log'
 app = Flask(__name__)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 class InvoiceFilter:
@@ -36,16 +38,14 @@ class InvoiceFilter:
 @app.route('/')
 def home():
     guest_name = request.args.get('name')
-    check_params(guest_name, 'name')
-
-    log_level = request.args.get('log-level', 'DEBUG')
-    controller = get_invoice_controller(log_level=log_level)
-    controller.info(log_level)
-
     if not guest_name:
         logger.warning(
             f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set (HTTP 404).")
         return jsonify(success=False), 404
+
+    log_level = request.args.get('log-level', 'DEBUG')
+    controller = get_invoice_controller(log_level=log_level)
+    controller.info(log_level)
 
     controller.info(f"Generating invoice overview for guest '{guest_name}'...")
     guest_invoices = get_invoice_items(guest_name=guest_name, include_settled=False)
@@ -55,10 +55,12 @@ def home():
 @app.route('/add', methods=['POST'])
 def add_to_bill():
     guest_name = request.form.get('name')
-    check_params(guest_name, 'name')
+    if not guest_name:
+        return param_error('name')
 
     invoice_item = request.form.get('item')
-    check_params(invoice_item, 'item')
+    if not invoice_item:
+        return param_error(invoice_item, 'item')
 
     payment_method = request.form.get('payment-method', PAYMENT_ON_ACCOUNT)
     note = request.form.get('note', '')
@@ -87,7 +89,8 @@ def add_to_bill():
 def storno():
     controller = get_invoice_controller()
     invoice_number = request.form.get('number')
-    check_params(invoice_number, 'number')
+    if not invoice_number:
+        return param_error('number')
 
     for invoice in accounted_invoices():
         if invoice['invoice_number'] == invoice_number:
@@ -107,7 +110,8 @@ def storno():
 @app.route('/request-bill')
 def request_bill():
     guest_name = request.args.get('name')
-    check_params(guest_name, 'name')
+    if not guest_name:
+        return param_error('name')
 
     logger.info(f"Requesting bill for guest '{guest_name}'...")
 
@@ -126,10 +130,12 @@ def request_bill():
 @app.route('/invoice_details')
 def invoice_details():
     invoice_number = request.args.get('invoice_number')
-    check_params(invoice_number, 'invoice_number')
+    if not invoice_number:
+        return param_error('invoice_number')
 
     guest_name = request.args.get('guest_name')
-    check_params(guest_name, 'guest_name')
+    if not guest_name:
+        return param_error('guest_name')
 
     logger.info(f"Requesting invoice '{invoice_number}'...")
 
@@ -227,9 +233,8 @@ def start_app(host, threaded=False):
     app.run(port=7354, host=host, threaded=threaded)
 
 
-def check_params(param, name):
-    if not param:
-        return jsonify(success=False, message=f"missing parameter {name}"), 400
+def param_error(name):
+    return jsonify(success=False, message=f"missing parameter {name}"), 400
 
 
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ def test_add_invoice():
 
 def test_add_invoice_error_handling():
     r = requests.post(URL + '/add')
-    assert r.status_code == 404
+    assert r.status_code == 400
 
 
 def test_storno_invoice_error_handling():
@@ -61,7 +61,7 @@ def test_request_bill():
 
 def test_request_bill_error_handling():
     r = requests.get(URL + '/request-bill')
-    assert r.status_code == 404
+    assert r.status_code == 400
 
 
 @pytest.mark.no_pipeline_support
