@@ -28,7 +28,10 @@ def get_paying_sessions():
     conn = psycopg2.connect(CONNECTION_STRING)
     cur = conn.cursor()
     query = sql.SQL("""
-    SELECT * FROM ringring.sessions WHERE session_id NOT IN (SELECT session_id FROM ringring.sessions WHERE NOT is_billable AND is_vip);
+    SELECT * FROM ringring.sessions WHERE session_id NOT IN 
+        (SELECT session_id FROM ringring.sessions WHERE NOT is_billable AND is_vip)
+        ORDER BY started DESC 
+        LIMIT 200;
     """)
     cur.execute(query)
     data = [{'guest_id': row[0]} for row in cur.fetchall()]
