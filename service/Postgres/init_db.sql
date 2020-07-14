@@ -14,3 +14,6 @@ CREATE TABLE ringring.sessions
     is_billable boolean CHECK ( is_billable != is_vip ) DEFAULT TRUE,
     is_vip     boolean DEFAULT FALSE
 );
+
+CREATE INDEX ON ringring.sessions(session_id);
+CREATE INDEX ON ringring.alarms(session_id);
