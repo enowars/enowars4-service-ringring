@@ -84,6 +84,8 @@ def alarm():
 @app.route('/invoices', methods=['GET'])
 def invoices():
     guest_name = request.cookies.get('session_id')
+    check_session_id(guest_name)
+
     guest_invoices = get_invoices(guest_name)
 
     class InvoiceItemTable(Table):
@@ -111,6 +113,8 @@ def guests():
 @app.route('/make_me_a_vip', methods=['POST'])
 def make_me_a_vip():
     session_id = request.cookies.get('session_id')
+    check_session_id(session_id)
+
     db_helper.make_vip(session_id)
 
     recalc = request.form.get('recalc')
@@ -127,6 +131,8 @@ def make_me_a_vip():
 @debug(logger=logger, _debug=False)
 def set_alarm(user_text, state):
     session_id = request.cookies.get('session_id')
+    check_session_id(session_id)
+
     mode = state['mode']
     if mode == 'alarm':
         if 'alarm_time' in state:
@@ -168,6 +174,8 @@ def set_alarm(user_text, state):
 
 def make_invoice(user_text, state):
     session_id = request.cookies.get('session_id')
+    check_session_id(session_id)
+
     mode = state['mode']
 
     if mode == 'invoice':
@@ -196,6 +204,8 @@ def make_invoice(user_text, state):
 
 def order_food(user_text, state):
     session_id = request.cookies.get('session_id')
+    check_session_id(session_id)
+
     mode = state['mode']
     if mode == 'food_order':
         if state['order_step'] == '1':
@@ -226,6 +236,8 @@ def order_food(user_text, state):
 
 def get_invoice_info(user_text, state):
     session_id = request.cookies.get('session_id')
+    check_session_id(session_id)
+
     mode = state['mode']
     if mode == 'invoice_info':
         invoice_number = user_text
@@ -239,6 +251,11 @@ def get_invoice_info(user_text, state):
     else:
         return {'response': 'Please give us the number of your invoice that you want to have more information on.',
                 'state': json.dumps({'mode': 'invoice_info'})}
+
+
+def check_session_id(session_id):
+    if not session_id:
+        return json.dumps({'error': 'could not find session_id in your cookies'}), 400
 
 
 if __name__ == '__main__':

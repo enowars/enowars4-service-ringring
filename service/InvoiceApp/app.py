@@ -36,6 +36,8 @@ class InvoiceFilter:
 @app.route('/')
 def home():
     guest_name = request.args.get('name')
+    check_params(guest_name, 'name')
+
     log_level = request.args.get('log-level', 'DEBUG')
     controller = get_invoice_controller(log_level=log_level)
     controller.info(log_level)
@@ -53,14 +55,18 @@ def home():
 @app.route('/add', methods=['POST'])
 def add_to_bill():
     guest_name = request.form.get('name')
+    check_params(guest_name, 'name')
+
     invoice_item = request.form.get('item')
+    check_params(invoice_item, 'item')
+
     payment_method = request.form.get('payment-method', PAYMENT_ON_ACCOUNT)
     note = request.form.get('note', '')
 
     if not validate_invoice(guest_name, invoice_item):
         logger.warning(
             f"Aborting invoice accounting - invoice parameters guest name '{guest_name}' and item '{invoice_item}' are not valid (HTTP 404).")
-        return jsonify(success=False), 404
+        return jsonify(success=False), 400
 
     amount = get_price(invoice_item)
     invoice_number = get_invoice_number()
@@ -81,6 +87,8 @@ def add_to_bill():
 def storno():
     controller = get_invoice_controller()
     invoice_number = request.form.get('number')
+    check_params(invoice_number, 'number')
+
     for invoice in accounted_invoices():
         if invoice['invoice_number'] == invoice_number:
             # creating storno invoice number
@@ -99,10 +107,9 @@ def storno():
 @app.route('/request-bill')
 def request_bill():
     guest_name = request.args.get('name')
+    check_params(guest_name, 'name')
+
     logger.info(f"Requesting bill for guest '{guest_name}'...")
-    if not guest_name:
-        logger.warning(f"Aborting bill request - parameter guest name '{guest_name}' is not valid (HTTP 404).")
-        return jsonify(success=False), 404
 
     bill = []
     items = []
@@ -119,11 +126,12 @@ def request_bill():
 @app.route('/invoice_details')
 def invoice_details():
     invoice_number = request.args.get('invoice_number')
+    check_params(invoice_number, 'invoice_number')
+
     guest_name = request.args.get('guest_name')
+    check_params(guest_name, 'guest_name')
+
     logger.info(f"Requesting invoice '{invoice_number}'...")
-    if not invoice_number:
-        logger.warning(f"Aborting bill request - parameter invoice number '{invoice_number}' is not valid (HTTP 404).")
-        return jsonify(success=False), 404
 
     invoice = get_invoice_by_number(invoice_number, guest_name)
     return jsonify(invoice=invoice, success=True)
@@ -217,6 +225,11 @@ def account(self, msg, *args, **kwargs):
 
 def start_app(host, threaded=False):
     app.run(port=7354, host=host, threaded=threaded)
+
+
+def check_params(param, name):
+    if not param:
+        return jsonify(success=False, message=f"missing parameter {name}"), 400
 
 
 if __name__ == '__main__':
