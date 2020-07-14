@@ -14,7 +14,7 @@ app = Flask(__name__)
 logger = logging.getLogger('RingRing')
 logger.setLevel(logging.INFO)
 
-AVAILABLE_FOOD = ['pizza', 'bred', 'fish']
+AVAILABLE_FOOD = ['pizza', 'bread', 'fish']
 
 
 # handler = logging.FileHandler(os.environ['LOGDIR'])
@@ -60,10 +60,10 @@ def get_bot_response():
 
     else:
         # logger.debug('Something very secret.')
-        return {'response': '''I have no service registered to that request. These are the services that I can provoide: <br>
+        return {'response': '''I have no service registered to that request. These are the services that I can provide: <br>
         - set an alarm <br>
-        - order champaign <br>
-        - ...
+        - order food <br>
+        - pay your bills
         ''',
                 'state': json.dumps({'mode': 'main_menu'})}
 
