@@ -87,7 +87,6 @@ def invoices():
     guest_invoices = get_invoices(guest_name)
 
     class InvoiceItemTable(Table):
-        invoice_number = Col('Invoice Number')
         item = Col('Item')
         name = Col('Guest Name')
         amount = Col('Amount')
@@ -99,7 +98,7 @@ def invoices():
 @app.route('/guests', methods=['GET'])
 def guests():
     class ItemTable(Table):
-        guest_id = Col('guest_id')
+        guest_id = Col('Guest ID')
 
     items = db_helper.get_paying_sessions()
     table = ItemTable(items)
