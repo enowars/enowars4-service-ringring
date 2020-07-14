@@ -29,29 +29,15 @@ def test_add_invoice():
     n = len(find_accounted_invoices(guest_name=params['name'], item=params['item']))
 
     r = requests.post(URL + '/add', data=params)
-
+    invoice_number = r.json()['invoice_number']
     assert r.status_code == 200
     assert len(find_accounted_invoices(guest_name=params['name'], item=params['item'])) == n + 1
+    storno_invoice(invoice_number, 'somebody')
 
 
 def test_add_invoice_error_handling():
     r = requests.post(URL + '/add')
     assert r.status_code == 404
-
-
-def test_storno_invoice():
-    guest_name = secrets.token_hex(8)
-    add_invoice_to_accounting_log(guest_name, 'pizza')
-    invoice_number = find_accounted_invoices(guest_name, 'pizza')[0]['invoice_number']
-    print('invoice_number')
-    print(invoice_number)
-    params = {'number': invoice_number}
-    r = requests.post(URL + '/storno', params)
-
-    invoices = find_accounted_invoices(guest_name, 'pizza')
-
-    assert r.status_code == 200
-    assert float(invoices[0]['amount']) + float(invoices[1]['amount']) == 0.0
 
 
 def test_storno_invoice_error_handling():
@@ -168,3 +154,13 @@ def find_accounted_invoices(guest_name, item=None):
         if invoice['item'] == item:
             invoices.append(invoice)
     return invoices
+
+
+def storno_invoice(invoice_number, guest_name):
+    params = {'number': invoice_number}
+    r = requests.post(URL + '/storno', params)
+
+    invoices = find_accounted_invoices(guest_name, 'pizza')
+
+    assert r.status_code == 200
+    assert float(invoices[0]['amount']) + float(invoices[1]['amount']) == 0.0
