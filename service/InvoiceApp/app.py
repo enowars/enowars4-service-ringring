@@ -60,7 +60,7 @@ def add_to_bill():
 
     invoice_item = request.form.get('item')
     if not invoice_item:
-        return param_error(invoice_item, 'item')
+        return param_error('item')
 
     payment_method = request.form.get('payment-method', PAYMENT_ON_ACCOUNT)
     note = request.form.get('note', '')
@@ -140,6 +140,8 @@ def invoice_details():
     logger.info(f"Requesting invoice '{invoice_number}'...")
 
     invoice = get_invoice_by_number(invoice_number, guest_name)
+    logger.info(f"retruning invoice information: {invoice}")
+
     return jsonify(invoice=invoice, success=True)
 
 

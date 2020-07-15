@@ -161,6 +161,8 @@ class RingRingChecker(enochecker.BaseChecker):
         enochecker.assert_equals(200, req.status_code,
                                  "The request did not return with the expected response code. Verify, that the invoice service is returning the desired response.")
         data = req.json()
+        parsed_response = data['response'].replace('\\u200d', '\u200d')
+        self.logger.debug(f"expected text: {expected_text}, data: {parsed_response}")
         enochecker.assert_in(expected_text, data['response'].replace('\\u200d', '\u200d'),
                              f"Could not find expected invoice in response.")
 
