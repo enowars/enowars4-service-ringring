@@ -26,3 +26,8 @@ services:
     - POSTGRES_USER=ringring
     - POSTGRES_DB=service
     container_name: ringring-postgres
+    volumes:
+    - ringring_pg_data:/var/lib/postgresql/data
+
+volumes:
+  ringring_pg_data:

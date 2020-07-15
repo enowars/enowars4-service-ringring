@@ -1,13 +1,13 @@
-CREATE SCHEMA ringring;
+CREATE SCHEMA IF NOT EXIST ringring;
 
-CREATE TABLE ringring.alarms
+CREATE TABLE IF NOT EXIST ringring.alarms
 (
     session_id text,
     alarm_time text,
     alarm_text text
 );
 
-CREATE TABLE ringring.sessions
+CREATE TABLE IF NOT EXIST ringring.sessions
 (
     session_id text,
     started     timestamptz DEFAULT now(),
@@ -15,5 +15,5 @@ CREATE TABLE ringring.sessions
     is_vip     boolean DEFAULT FALSE
 );
 
-CREATE INDEX ON ringring.sessions(session_id);
-CREATE INDEX ON ringring.alarms(session_id);
+CREATE INDEX IF NOT EXIST ON ringring.sessions(session_id);
+CREATE INDEX IF NOT EXIST ON ringring.alarms(session_id);
