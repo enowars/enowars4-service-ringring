@@ -17,6 +17,8 @@ services:
       context: .
       dockerfile: InvoiceApp/Dockerfile
     container_name: ringring-invoices
+    volumes:
+    - ringring_invoice_data:/InvoiceApp/accounting/
   ringring-postgres:
     build:
       context: .
@@ -31,3 +33,4 @@ services:
 
 volumes:
   ringring_pg_data:
+  ringring_invoice_data:
