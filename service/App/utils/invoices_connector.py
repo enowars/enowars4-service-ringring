@@ -49,14 +49,16 @@ def get_invoices(guest_name):
 def request_bill(guest_name):
     if 'INVOICE_HOST' not in os.environ:
         logger.error(f"Could not get invoice for '{guest_name}''. INVOICE_HOST variabe is missing.")
-        return []
+        return [], None
     if not guest_name:
         logger.warning(f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set.")
-        return []
+        return [], None
     guest_pseudonym = hashlib.md5(guest_name.encode('utf-8')).hexdigest()
     url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/request-bill'
     response = requests.get(url, {'name': guest_pseudonym})
     data = response.json()
+    if not data:
+        return [], None
     return data['items'], data['total']
 
 
