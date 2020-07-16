@@ -112,6 +112,7 @@ steps:
 trigger:
   branch:
   - master
+  - an_end_to_the_madness
   event:
   - push
 
