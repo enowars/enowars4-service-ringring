@@ -158,8 +158,11 @@ def settle_bill_invoices(bill):
 
     with open(OUTSTANDING_INVOICES, 'w') as f:
         for invoice in journal:
-            if json.loads(invoice)['invoice_number'] not in invoice_numbers:
-                f.write(invoice)
+            try:
+                if json.loads(invoice)['invoice_number'] not in invoice_numbers:
+                    f.write(invoice)
+            except Exception as e:
+                logger.error(f"Error settling bill for invoice '{invoice}': {e}")
 
 
 def validate_invoice(guest_name, invoice_item):
@@ -190,7 +193,11 @@ def accounted_invoices(guest_name=None, file_path=OUTSTANDING_INVOICES):
 
     with open(file_path) as journal:
         for entry in journal:
-            invoice = json.loads(entry)
+            try:
+                invoice = json.loads(entry)
+            except Exception as e:
+                logger.error(f"Error reading invoice '{entry}': {e}")
+                continue
             if not guest_name or invoice['name'] == guest_name:
                 yield invoice
 
