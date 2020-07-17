@@ -60,7 +60,9 @@ def get_invoice_by_number(guest_name, invoice_number):
     conn.commit()
     conn.close()
 
-    return data
+    if len(data) > 1:
+        logger.warning(f'Multiple invoices found with the name invoice number: {data}')
+    return data[0]
 
 
 def get_invoices_from_guest(guest_name):
