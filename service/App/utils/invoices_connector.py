@@ -2,14 +2,10 @@ import logging
 import requests
 import hashlib
 import os
-import sys
 
 PAYMENT_ON_ACCOUNT = 'room-bill'
 
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.INFO)
 logger = logging.getLogger('RingRing')
-logger.addHandler(handler)
 
 
 def add_to_invoice(guest_name, service, payment_method=PAYMENT_ON_ACCOUNT, notes=None):
@@ -19,7 +15,7 @@ def add_to_invoice(guest_name, service, payment_method=PAYMENT_ON_ACCOUNT, notes
 
     guest_pseudonym = hashlib.md5(guest_name.encode('utf-8')).hexdigest()
     url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/add'
-    params = {'name': guest_pseudonym, 'item': service, 'payment': payment_method, 'note': notes}
+    params = {'name': guest_pseudonym, 'item': service, 'payment-method': payment_method, 'note': notes}
     resp = requests.post(url, params)
     return resp.json()['invoice_number']
 
@@ -56,11 +52,15 @@ def request_bill(guest_name):
     guest_pseudonym = hashlib.md5(guest_name.encode('utf-8')).hexdigest()
     url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/request-bill'
     response = requests.get(url, {'name': guest_pseudonym})
+    if response.status_code != 200:
+        logger.warning(f"Request to {url} with did not return successfully.")
+        return {}
     data = response.json()
-    return data['items'], data['total']
+    return data['total']
 
 
 def get_invoice_by_invoice_number(invoice_number, session_id):
+    session = requests.session()
     guest_pseudonym = hashlib.md5(session_id.encode('utf-8')).hexdigest()
     if 'INVOICE_HOST' not in os.environ:
         logger.error(f'Could not get invoice {invoice_number}. INVOICE_HOST variabe is missing.')
@@ -71,10 +71,14 @@ def get_invoice_by_invoice_number(invoice_number, session_id):
 
     url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/invoice_details'
     params = {'invoice_number': invoice_number, 'guest_name': guest_pseudonym}
-    response = requests.get(url, params)
+    response = session.get(url, params = params)
 
     if response.status_code != 200:
-        logger.warning(f"Request to {url} with params {params} did not return successfully.")
+        try:
+            response_text = response.text
+        except:
+            response_text = ""
+        logger.warning(f"Request to {url} with params {params} did not return successfully. Return code: {response.status_code}. Response_text {response_text}" )
         return {}
     invoice = response.json()['invoice']
 

@@ -31,6 +31,15 @@ steps:
     repo: registry:5000/ringring-service-postgres
     registry: registry:5000
     insecure: true
+- name: publish-invoices-postgres
+  image: plugins/docker
+  network_mode: registry-network
+  settings:
+    context: service
+    dockerfile: service/InvoicePostgres/Dockerfile
+    repo: registry:5000/invoice-service-postgres
+    registry: registry:5000
+    insecure: true
 
 ---
 kind: pipeline
@@ -65,12 +74,21 @@ services:
     INVOICE_HOST: invoices
 - name: invoices
   image: localhost:5000/ringring-service-invoices
+  environment:
+    PGPASSWORD: mysecretpassword
+    PGHOST: invoices-postgres
 - name: postgres
   image: localhost:5000/ringring-service-postgres
   environment:
     POSTGRES_PASSWORD: mysecretpassword
     POSTGRES_USER: ringring
     POSTGRES_DB: service
+- name: invoices-postgres
+  image: localhost:5000/invoice-service-postgres
+  environment:
+    POSTGRES_PASSWORD: mysecretpassword
+    POSTGRES_USER: ringring
+    POSTGRES_DB: invoice
 
 
 volumes:
@@ -112,6 +130,7 @@ steps:
 trigger:
   branch:
   - master
+  - an_end_to_the_madness
   event:
   - push
 

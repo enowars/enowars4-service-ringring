@@ -179,7 +179,7 @@ def test_invoice_generation():
     step_2_params = {'msg': 'y', 'state': json.dumps({'mode': 'invoice', 'invoice_step': '1'})}
     r = session.get(url, params=step_2_params)
     assert r.status_code == 200
-    assert 'for a total ammount of <b>1.5' in r.text
+    assert 'total amount of <b>1.5' in r.text
     assert json.loads(r.json()['state'])['mode'] == 'main_menu'
 
 

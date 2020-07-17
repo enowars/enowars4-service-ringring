@@ -7,6 +7,9 @@ import secrets
 import yaml
 import json
 import sys
+from werkzeug.serving import WSGIRequestHandler
+from utils import invoice_db_helper
+import datetime
 
 ACCOUNT = 5
 PAYMENT_ON_ACCOUNT = 'room-bill'
@@ -39,17 +42,16 @@ class InvoiceFilter:
 def home():
     guest_name = request.args.get('name')
     if not guest_name:
-        logger.warning(
-            f"Abort getting invoice overview - mandatory parameter guest name '{guest_name}' is not set (HTTP 404).")
-        return jsonify(success=False), 404
+        return param_error('guest_name')
 
     log_level = request.args.get('log-level', 'DEBUG')
     controller = get_invoice_controller(log_level=log_level)
     controller.info(log_level)
 
     controller.info(f"Generating invoice overview for guest '{guest_name}'...")
-    guest_invoices = get_invoice_items(guest_name=guest_name, include_settled=False)
-    return jsonify(invoices=guest_invoices, success=True)
+    guest_invoices = invoice_db_helper.get_invoices_from_guest(guest_name)
+    response = json.dumps({'invoices': guest_invoices, 'success': True}, default=str)
+    return response
 
 
 @app.route('/add', methods=['POST'])
@@ -79,32 +81,30 @@ def add_to_bill():
         'amount': amount,
         'note': note
     }
-
     controller = get_invoice_controller(payment_method=payment_method)
     controller.account(f'invoice #{invoice_number} accounted', extra=invoice)
+    if payment_method == PAYMENT_SETTLED:
+        paid = True
+    else:
+        paid = False
+
+    invoice_db_helper.insert_invoice(invoice_number, invoice_item, guest_name, datetime.datetime.now(), amount, note,
+                                     paid)
     return jsonify(success=True, invoice_number=invoice_number)
 
 
 @app.route('/storno', methods=['POST'])
 def storno():
-    controller = get_invoice_controller()
     invoice_number = request.form.get('number')
     if not invoice_number:
         return param_error('number')
 
-    for invoice in accounted_invoices():
-        if invoice['invoice_number'] == invoice_number:
-            # creating storno invoice number
-            invoice['invoice_number'] = get_invoice_number()
-            invoice['amount'] = float(invoice['amount']) * -1
-            invoice['guest_name'] = invoice.pop('name')
-            invoice.pop('time')
-            controller.account(f"cancelling invoice #{invoice_number} (negative booking #{invoice['invoice_number']})",
-                               extra=invoice)
-            return jsonify(success=True)
-
-    logger.warning(f"cancelling invoice failed - no invoice found for invoice number '{invoice_number}' (HTTP 404).")
-    return jsonify(success=False), 404
+    if invoice_db_helper.delete_invoice(invoice_number):
+        return jsonify(success=True)
+    else:
+        logger.warning(
+            f"Something went wrong with your request.")
+        return jsonify(success=False), 400
 
 
 @app.route('/request-bill')
@@ -115,16 +115,13 @@ def request_bill():
 
     logger.info(f"Requesting bill for guest '{guest_name}'...")
 
-    bill = []
-    items = []
-    total = 0.0
-    for invoice in accounted_invoices(guest_name):
-        bill.append(invoice)
-        items.append(invoice['item'])
-        total += float(invoice['amount'])
-
-    settle_bill_invoices(bill)
-    return jsonify(total=total, items=items, success=True)
+    total = invoice_db_helper.set_invoices_paid(guest_name)
+    logger.info(f"{guest_name} payed total amount of {total}")
+    if total or total == 0:
+        response = json.dumps({'total': total, 'sucess': True}, default=str)
+        return response
+    else:
+        return jsonify(success=False), 400
 
 
 @app.route('/invoice_details')
@@ -139,27 +136,12 @@ def invoice_details():
 
     logger.info(f"Requesting invoice '{invoice_number}'...")
 
-    invoice = get_invoice_by_number(invoice_number, guest_name)
-    logger.info(f"retruning invoice information: {invoice}")
+    invoice = invoice_db_helper.get_invoice_by_number(guest_name, invoice_number)
 
-    return jsonify(invoice=invoice, success=True)
+    logger.info(f"returning invoice information: {invoice}")
 
-
-def settle_bill_invoices(bill):
-    controller = get_invoice_controller(payment_method=PAYMENT_SETTLED)
-    for invoice in bill:
-        invoice['guest_name'] = invoice.pop('name')
-        invoice.pop('time')
-        controller.account(f"invoice #{invoice['invoice_number']} settled", extra=invoice)
-
-    invoice_numbers = [invoice['invoice_number'] for invoice in bill]
-    with open(OUTSTANDING_INVOICES, 'r') as f:
-        journal = f.readlines()
-
-    with open(OUTSTANDING_INVOICES, 'w') as f:
-        for invoice in journal:
-            if json.loads(invoice)['invoice_number'] not in invoice_numbers:
-                f.write(invoice)
+    response = json.dumps({'invoice': invoice, 'success': True}, default=str)
+    return response
 
 
 def validate_invoice(guest_name, invoice_item):
@@ -170,10 +152,11 @@ def get_price(item):
     price_sheet = {
         'alarm': 1.50,
         'pizza': 6.00,
-        'bred': 2.00,
+        'bread': 2.00,
         'fish': 15.00,
         'wine': 4.00,
         'room-service-food': 9.99,
+        ''
         'reception': 0.0,
         'extra-cleaning': 20.0
     }
@@ -181,37 +164,7 @@ def get_price(item):
 
 
 def get_invoice_number():
-    return secrets.randbits(32)
-
-
-def accounted_invoices(guest_name=None, file_path=OUTSTANDING_INVOICES):
-    if not Path(file_path).is_file():
-        return
-
-    with open(file_path) as journal:
-        for entry in journal:
-            invoice = json.loads(entry)
-            if not guest_name or invoice['name'] == guest_name:
-                yield invoice
-
-
-def get_invoice_by_number(invoice_number, guest_name):
-    for invoice in accounted_invoices(guest_name):
-        if invoice['invoice_number'] == invoice_number:
-            return invoice
-    return {}
-
-
-def get_invoice_items(guest_name=None, include_settled=False):
-    invoices = list(accounted_invoices(guest_name=guest_name))
-    if include_settled:
-        invoices.extend(
-            accounted_invoices(guest_name=guest_name, file_path=SETTLED_INVOICES))
-    logger.info(f"Returning invoices for {guest_name}: {invoices}")
-    for invoice in invoices:
-        invoice.pop('invoice_number')
-        invoice.pop('note')
-    return invoices
+    return secrets.randbits(64)
 
 
 def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
@@ -222,7 +175,7 @@ def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT
         logging.config.dictConfig(config)
         logging.Logger.account = account
         logger = logging.getLogger('invoice_controller')
-        logger.debug('invoice-controller logger started.')
+        # logger.debug('invoice-controller logger started.')
     return logger
 
 
@@ -231,8 +184,8 @@ def account(self, msg, *args, **kwargs):
         self._log(ACCOUNT, msg, args, **kwargs)
 
 
-def start_app(host, threaded=False):
-    app.run(port=7354, host=host, threaded=threaded)
+def start_app(host):
+    app.run(port=7354, host=host, debug=True)
 
 
 def param_error(name):
@@ -240,4 +193,5 @@ def param_error(name):
 
 
 if __name__ == '__main__':
+    WSGIRequestHandler.protocol_version = "HTTP/1.1"
     start_app(host='0.0.0.0')

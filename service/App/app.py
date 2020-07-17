@@ -8,12 +8,14 @@ import json
 import uuid
 from flask_table import Table, Col
 import ast
+import sys
+from werkzeug.serving import WSGIRequestHandler
 
 app = Flask(__name__)
 
 logger = logging.getLogger('RingRing')
-logger.setLevel(logging.INFO)
-
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 AVAILABLE_FOOD = ['pizza', 'bread', 'fish']
 
 
@@ -140,19 +142,22 @@ def set_alarm(user_text, state):
             try:
                 logger.debug(f'{session_id}: Set alarm text to: {user_text}.')
                 db_helper.insert_alarm(session_id, alarm_time, user_text)
+                logger.info(f"inserted alarm to db. session_id: {session_id}")
                 return {
-                    'response': f'Alarm text set to {user_text}. <br>Do you want to pay [now] or put it on your [room-bill]?',
+                    'response': f'Alarm text set to {user_text}. <br>Do you want to pay [cash] or put it on your [room-bill]?',
                     'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
             except ValueError:
                 return {'response': 'This was not a valid input. Try again.',
                         'state': json.dumps({'mode': 'alarm',
                                              'alarm_time': alarm_time})}
         elif 'payment' in state:
-            if user_text not in ('now', 'room-bill'):
-                return {'response': 'This was not a valid input. Try [now] or [room-bill].',
+            if user_text not in ('cash', 'room-bill'):
+                return {'response': 'This was not a valid input. Try [cash] or [room-bill].',
                         'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
             else:
                 invoice_number = add_to_invoice(session_id, 'alarm', payment_method=user_text)
+                logger.info(f"Added alarm to invoice. Session_id {session_id}")
+
                 return {'response': f'Perfect. Thank you very much. Your invoice number is: {invoice_number}',
                         'state': json.dumps({'mode': 'main_menu'})}
         else:
@@ -188,11 +193,9 @@ def make_invoice(user_text, state):
                     'response': 'No problem. You can pay any time you want. But we will not forget your open bills!',
                     'state': json.dumps({'mode': 'main_menu'})}
             else:
-                items, total = request_bill(session_id)
-                response_string = "You have paid for the following items: <br>"
-                for item in items:
-                    response_string = response_string + str(item) + '<br>'
-                response_string = response_string + f"""for a total ammount of <b>{total}</b>. <br>
+                logger.info(f"Requesting bill for {session_id}")
+                total = request_bill(session_id)
+                response_string = f"""You have paid a total amount of <b>{total}</b>. <br>
                                     It was a pleasure to have you as our guest. Make sure to come back soon!"""
                 return {'response': response_string,
                         'state': json.dumps({'mode': 'main_menu'})}
@@ -222,6 +225,7 @@ def order_food(user_text, state):
                 note = None
             else:
                 note = user_text
+            logger.info(f"adding order {order} to invoice for {session_id} with notes {note}")
             invoice_number = add_to_invoice(session_id, order, notes=note)
             return {'response': f"""Thanks a lot for your order. The Microwave is spinning! We noted: {note}. 
                                     Your invoice number is {invoice_number}.""",
@@ -242,6 +246,7 @@ def get_invoice_info(user_text, state):
     if mode == 'invoice_info':
         invoice_number = user_text
         invoice_info = get_invoice_by_invoice_number(invoice_number, session_id)
+        logger.info(f"Received invoice info for {session_id}, invoice number {invoice_number}, data: {invoice_info}")
         if not invoice_info:
             response = f'Your invoice number {invoice_number} was not valid. sorry.'
         else:
@@ -259,4 +264,5 @@ def check_session_id(session_id):
 
 
 if __name__ == '__main__':
+    WSGIRequestHandler.protocol_version = "HTTP/1.1"
     app.run(port=7353, host='0.0.0.0')
