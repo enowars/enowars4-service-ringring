@@ -129,7 +129,7 @@ def make_me_a_vip():
         if db_helper.update_invoicing(vips_are_billable):
             return {'success': True}
         else:
-            return {'success': False}
+            return {'success': False}, 400
     else:
         return {'success': True}
 

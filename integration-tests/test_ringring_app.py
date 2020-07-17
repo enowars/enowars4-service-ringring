@@ -148,7 +148,7 @@ def test_db_constraint_working():
     assert 'recalc must be either True or False' in r.text
 
     r = SESSION.post(URL + '/make_me_a_vip', data={'recalc': 'True'})
-    assert r.status_code == 500
+    assert r.status_code == 400
 
     r = SESSION.post(URL + '/make_me_a_vip', data={'recalc': 'False'})
     assert r.status_code == 200
