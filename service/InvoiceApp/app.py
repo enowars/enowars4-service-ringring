@@ -167,6 +167,7 @@ def get_invoice_number():
     return secrets.randbits(64)
 
 
+
 def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
     with open('logger-config.yml', 'r') as yaml_file:
         config = yaml_file.read().format(payment_method=payment_method, level=log_level)
