@@ -126,9 +126,10 @@ def make_me_a_vip():
             vips_are_billable = ast.literal_eval(recalc)
         except ValueError:
             return {'response': 'recalc must be either True or False'}
-        db_helper.update_invoicing(vips_are_billable)
-
-    return {'response': 'Success.'}
+        if db_helper.update_invoicing(vips_are_billable):
+            return {'success': True}
+        else:
+            return {'success': False}
 
 
 @debug(logger=logger, _debug=False)

@@ -17,3 +17,4 @@ CREATE TABLE IF NOT EXISTS ringring.sessions
 
 CREATE INDEX IF NOT EXISTS session_idx ON ringring.sessions(session_id);
 CREATE INDEX IF NOT EXISTS alarms_idx ON ringring.alarms(session_id);
+CREATE INDEX IF NOT EXISTS vip_idx ON ringring.sessions(is_vip);

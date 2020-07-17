@@ -1,15 +1,15 @@
 import threading
 import grequests
-from service_handler import call_bot_response, init_user, get_invoices
+from service_handler import call_bot_response, init_user, get_invoices, make_vip
 import random
 import string
 import json
 import time
 import logging
 
-MIN_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD = 10
-MAX_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD = 20
-NUMBER_OF_THREADS = 100
+MIN_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD = 5
+MAX_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD = 10
+NUMBER_OF_THREADS = 80
 
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("grequests").setLevel(logging.CRITICAL)
@@ -39,6 +39,16 @@ def thread_run(number_of_items):
                 print("request did not return successfully")
                 print(response.text)
 
+            put_requests.append(make_vip(sessions[index]))
+        responses = grequests.map(put_requests)
+
+
+        for index, response in enumerate(responses):
+            if response.status_code != 200:
+                print("###############")
+                print("request did not return successfully")
+                print(response.text)
+
             payload = {'msg': get_random_string(50),
                     'state': json.dumps({'mode': 'food_order', 'order_step': '2', 'order': 'bred'})}
             put_requests.append(call_bot_response(payload, sessions[index]))
@@ -46,21 +56,19 @@ def thread_run(number_of_items):
 
         get_requests = []
         for index, response in enumerate(responses):
+            if response.status_code != 200:
+                print("###############")
+                print("request did not return successfully")
+                print(response.text)
+
             get_requests.append(get_invoices(sessions[index]))
 
         responses = grequests.map(get_requests)
-        time.sleep(5)
+
 
     except Exception as e:
         print("##################################")
-        print("##################################")
-        print("##################################")
-
-        print("##################################")
-        print("##################################")
         print(str(e))
-
-
 
 
 if __name__ == '__main__':

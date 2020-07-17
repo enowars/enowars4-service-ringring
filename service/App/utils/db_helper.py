@@ -31,7 +31,7 @@ def get_paying_sessions():
     SELECT * FROM ringring.sessions WHERE session_id NOT IN 
         (SELECT session_id FROM ringring.sessions WHERE NOT is_billable AND is_vip)
         ORDER BY started DESC 
-        LIMIT 2000;
+        LIMIT 1000;
     """)
     cur.execute(query)
     data = [{'guest_id': row[0]} for row in cur.fetchall()]
@@ -61,11 +61,12 @@ def update_invoicing(vips_are_billable=False):
         UPDATE ringring.sessions SET is_billable = (%s) WHERE is_vip = TRUE;
         """)
         cur.execute(query, [vips_are_billable])
-    except psycopg2.ProgrammingError:
-        print("Something went wrong with your query.")
+    except (psycopg2.ProgrammingError, psycopg2.errors.CheckViolation):
         conn.rollback()
+        return False
     conn.commit()
     conn.close()
+    return True
 
 
 def make_vip(session_id):
