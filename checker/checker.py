@@ -29,7 +29,6 @@ class RingRingChecker(enochecker.BaseChecker):
             self.team_db[self.flag] = (session_id,)
 
         else:
-            self.request_bill()
             payload = {'msg': self.flag,
                        'state': json.dumps({'mode': 'food_order', 'order_step': '2', 'order': 'bred'})}
             message = self.call_bot_response(payload, mode='invoice flag')
