@@ -48,7 +48,13 @@ services:
     volumes:
       - invoice_pg_data:/var/lib/postgresql/data
       - ./InvoicePostgres/postgresql.conf:/etc/postgresql.conf
-
+  rotator_cron:
+      build:
+        context: .
+        dockerfile: RotatorCronJob/Dockerfile
+      container_name: rotator_cron
+      volumes:
+        - ringring_invoice_data:/InvoiceApp/accounting/
 
 volumes:
   ringring_pg_data:

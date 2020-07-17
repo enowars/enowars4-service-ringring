@@ -9,7 +9,7 @@ import logging
 
 MIN_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD = 5
 MAX_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD = 10
-NUMBER_OF_THREADS = 150
+NUMBER_OF_THREADS = 1
 
 logging.getLogger("requests").setLevel(logging.CRITICAL)
 logging.getLogger("grequests").setLevel(logging.CRITICAL)
