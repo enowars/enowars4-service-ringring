@@ -33,14 +33,15 @@ def thread_run(number_of_items):
             sessions.append(session)
         responses = grequests.map(init_requs)
 
+        vip_requests = []
         for index, response in enumerate(responses):
             if response.status_code != 200:
                 print("###############")
                 print("request did not return successfully")
                 print(response.text)
 
-            put_requests.append(make_vip(sessions[index]))
-        responses = grequests.map(put_requests)
+            vip_requests.append(make_vip(sessions[index]))
+        responses = grequests.map(vip_requests)
 
 
         for index, response in enumerate(responses):

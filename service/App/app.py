@@ -130,6 +130,8 @@ def make_me_a_vip():
             return {'success': True}
         else:
             return {'success': False}
+    else:
+        return {'success': True}
 
 
 @debug(logger=logger, _debug=False)
