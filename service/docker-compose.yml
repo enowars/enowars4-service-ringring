@@ -16,6 +16,9 @@ services:
     build:
       context: .
       dockerfile: InvoiceApp/Dockerfile
+    environment:
+      - PGPASSWORD=mysecretpassword
+      - PGHOST=invoices-postgres
     container_name: ringring-invoices
     volumes:
     - ringring_invoice_data:/InvoiceApp/accounting/
@@ -30,7 +33,19 @@ services:
     container_name: ringring-postgres
     volumes:
     - ringring_pg_data:/var/lib/postgresql/data
+  invoices-postgres:
+    build:
+      context: .
+      dockerfile: InvoicePostgres/Dockerfile
+    environment:
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_USER=ringring
+      - POSTGRES_DB=invoice
+    container_name: invoices-postgres
+    volumes:
+      - invoice_pg_data:/var/lib/postgresql/data
 
 volumes:
   ringring_pg_data:
+  invoice_pg_data:
   ringring_invoice_data:
