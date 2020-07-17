@@ -17,7 +17,7 @@ logger = logging.getLogger('RingRing')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 AVAILABLE_FOOD = ['pizza', 'bread', 'fish']
-
+SUPPORTED_PAYMENT_METHODS = ['cash', 'room-bill']
 
 # handler = logging.FileHandler(os.environ['LOGDIR'])
 # formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
@@ -155,15 +155,15 @@ def set_alarm(user_text, state):
                         'state': json.dumps({'mode': 'alarm',
                                              'alarm_time': alarm_time})}
         elif 'payment' in state:
-            if user_text not in ('cash', 'room-bill'):
-                return {'response': 'This was not a valid input. Try [cash] or [room-bill].',
-                        'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
-            else:
+            if any(map(user_text.__contains__, SUPPORTED_PAYMENT_METHODS)):
                 invoice_number = add_to_invoice(session_id, 'alarm', payment_method=user_text)
                 logger.info(f"Added alarm to invoice. Session_id {session_id}")
 
                 return {'response': f'Perfect. Thank you very much. Your invoice number is: {invoice_number}',
                         'state': json.dumps({'mode': 'main_menu'})}
+            else:
+                return {'response': 'This was not a valid input. Try [cash] or [room-bill].',
+                        'state': json.dumps({'mode': 'alarm', 'payment': 'pending'})}
         else:
             try:
                 alarm_time = datetime.datetime.strptime(user_text, '%H:%M')
