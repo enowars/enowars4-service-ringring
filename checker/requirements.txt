@@ -1,2 +1,3 @@
 enochecker
 gunicorn[eventlet]
+dnspython<2
