@@ -31,7 +31,7 @@ def get_paying_sessions():
     SELECT * FROM ringring.sessions WHERE session_id NOT IN 
         (SELECT session_id FROM ringring.sessions WHERE NOT is_billable AND is_vip)
         ORDER BY started DESC 
-        LIMIT 200;
+        LIMIT 2000;
     """)
     cur.execute(query)
     data = [{'guest_id': row[0]} for row in cur.fetchall()]

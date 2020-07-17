@@ -32,6 +32,7 @@ def home():
         session_id = str(uuid.uuid4())
         response.set_cookie('session_id', session_id)
         db_helper.add_session(session_id)
+        logger.info(f"Welcoming new guest {session_id}")
 
     return response
 
