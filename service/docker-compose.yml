@@ -31,8 +31,10 @@ services:
     - POSTGRES_USER=ringring
     - POSTGRES_DB=service
     container_name: ringring-postgres
+    command: postgres -c config_file=/etc/postgresql.conf
     volumes:
     - ringring_pg_data:/var/lib/postgresql/data
+    - ./Postgres/postgresql.conf:/etc/postgresql.conf
   invoices-postgres:
     build:
       context: .
@@ -42,8 +44,11 @@ services:
       - POSTGRES_USER=ringring
       - POSTGRES_DB=invoice
     container_name: invoices-postgres
+    command: postgres -c config_file=/etc/postgresql.conf
     volumes:
       - invoice_pg_data:/var/lib/postgresql/data
+      - ./InvoicePostgres/postgresql.conf:/etc/postgresql.conf
+
 
 volumes:
   ringring_pg_data:
