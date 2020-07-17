@@ -152,7 +152,7 @@ def test_db_constraint_working():
 
     r = SESSION.post(URL + '/make_me_a_vip', data={'recalc': 'False'})
     assert r.status_code == 200
-    assert 'Success' in r.text
+    assert 'success' in r.text
 
 
 def test_invoice_generation():
