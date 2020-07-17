@@ -7,11 +7,14 @@ COPY InvoiceApp/ /InvoiceApp
 RUN apt-get update && \
     apt-get -y install netcat
 
-RUN chmod 0666 /InvoiceApp/accounting/*
-
-RUN echo "root:$(openssl rand -hex 20)" | chpasswd
 RUN useradd -m hotelguest && \
     echo "hotelguest:$(openssl rand -hex 20)" | chpasswd
+
+RUN chmod -R 0766 /InvoiceApp/accounting
+RUN chown -R hotelguest:hotelguest InvoiceApp/accounting
+
+RUN echo "root:$(openssl rand -hex 20)" | chpasswd
+
 USER hotelguest
 
 WORKDIR /InvoiceApp
