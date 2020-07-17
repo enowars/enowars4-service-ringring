@@ -9,20 +9,16 @@ handlers:
     formatter: simple
     stream: ext://sys.stdout
   settled_invoices:
-    class: logging.handlers.RotatingFileHandler
+    class: logging.FileHandler
     filename: accounting/settled-invoices.log
-    maxBytes: 1048576
-    backupCount: 5
-    filters: [settled_invoices_only]
     mode: a
+    filters: [settled_invoices_only]
     formatter: invoice
   outstanding_invoices:
-    class: logging.handlers.RotatingFileHandler
+    class: logging.FileHandler
     filename: accounting/outstanding-invoices.log
-    maxBytes: 1048576
-    backupCount: 5
-    filters: [outstanding_invoices_only]
     mode: a
+    filters: [outstanding_invoices_only]
     formatter: invoice
 filters:
   settled_invoices_only:
