@@ -24,7 +24,7 @@ class RingRingChecker(enochecker.BaseChecker):
             self.call_bot_response(payload, mode='alarm flag')
 
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
-                               'msg': random.choice(['room-bill', 'now'])}
+                               'msg': random.choice(['room-bill', 'cash'])}
             self.call_bot_response(payment_payload, mode='alarm flag payment')
             self.team_db[self.flag] = (session_id,)
 
@@ -69,7 +69,7 @@ class RingRingChecker(enochecker.BaseChecker):
             self.call_bot_response(payload, mode='alarm noise')
 
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
-                               'msg': random.choice(['room-bill', 'now'])}
+                               'msg': random.choice(['room-bill', 'cash'])}
             self.call_bot_response(payment_payload, mode='alarm noise payment')
             self.team_db[self.noise] = (session_id,)
 
