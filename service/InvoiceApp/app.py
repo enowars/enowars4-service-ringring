@@ -24,18 +24,18 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 class InvoiceFilter:
-    def __init__(self, payment_method, invoice_status):
-        self.payment_method = payment_method
+    def __init__(self, payment_type, invoice_status):
+        self.payment_type = payment_type
         self.invoice_status = invoice_status
 
-    def get_invoice_status(self, payment_method):
-        if payment_method == 'cash' or payment_method == 'debit':
+    def get_invoice_status(self, payment_type):
+        if payment_type == 'cash' or payment_type == 'debit':
             return 'settled'
         else:
             return 'outstanding'
 
     def filter(self, logRecord):
-        return logRecord.levelno == ACCOUNT and self.get_invoice_status(self.payment_method) == self.invoice_status
+        return logRecord.levelno == ACCOUNT and self.get_invoice_status(self.payment_type) == self.invoice_status
 
 
 @app.route('/')
@@ -64,7 +64,7 @@ def add_to_bill():
     if not invoice_item:
         return param_error('item')
 
-    payment_method = request.form.get('payment-method', PAYMENT_ON_ACCOUNT)
+    payment_type = request.form.get('payment-type', PAYMENT_ON_ACCOUNT)
     note = request.form.get('note', '')
 
     if not validate_invoice(guest_name, invoice_item):
@@ -81,9 +81,9 @@ def add_to_bill():
         'amount': amount,
         'note': note
     }
-    controller = get_invoice_controller(payment_method=payment_method)
+    controller = get_invoice_controller(payment_type=payment_type)
     controller.account(f'invoice #{invoice_number} accounted', extra=invoice)
-    if payment_method == PAYMENT_SETTLED:
+    if payment_type == PAYMENT_SETTLED:
         paid = True
     else:
         paid = False
@@ -167,9 +167,9 @@ def get_invoice_number():
     return secrets.randbits(64)
 
 
-def get_invoice_controller(payment_method=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
+def get_invoice_controller(payment_type=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
     with open('logger-config.yml', 'r') as yaml_file:
-        config = yaml_file.read().format(payment_method=payment_method, level=log_level)
+        config = yaml_file.read().format(payment_type=payment_type, level=log_level)
         config = yaml.load(config, Loader=yaml.Loader)
         logging.addLevelName(ACCOUNT, 'ACCOUNT')
         logging.config.dictConfig(config)

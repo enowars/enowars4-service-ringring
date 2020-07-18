@@ -8,7 +8,7 @@ PAYMENT_ON_ACCOUNT = 'room-bill'
 logger = logging.getLogger('RingRing')
 
 
-def add_to_invoice(guest_name, service, payment_method=PAYMENT_ON_ACCOUNT, notes=None):
+def add_to_invoice(guest_name, service, payment_type=PAYMENT_ON_ACCOUNT, notes=None):
     session = requests.session()
     if 'INVOICE_HOST' not in os.environ:
         logger.error(f'Could not create invoice for {service} for {guest_name}. INVOICE_HOST variabe is missing.')
@@ -16,7 +16,7 @@ def add_to_invoice(guest_name, service, payment_method=PAYMENT_ON_ACCOUNT, notes
 
     guest_pseudonym = hashlib.md5(guest_name.encode('utf-8')).hexdigest()
     url = 'http://' + os.environ['INVOICE_HOST'] + ':7354/add'
-    params = {'name': guest_pseudonym, 'item': service, 'payment-method': payment_method, 'note': notes}
+    params = {'name': guest_pseudonym, 'item': service, 'payment-type': payment_type, 'note': notes}
     resp = session.post(url, data=params)
     return resp.json()['invoice_number']
 

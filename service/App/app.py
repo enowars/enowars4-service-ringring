@@ -17,7 +17,7 @@ logger = logging.getLogger('RingRing')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 AVAILABLE_FOOD = ['pizza', 'bread', 'fish']
-SUPPORTED_PAYMENT_METHODS = ['cash', 'room-bill']
+SUPPORTED_PAYMENT_TYPES = ['cash', 'room-bill']
 
 # handler = logging.FileHandler(os.environ['LOGDIR'])
 # formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
@@ -155,8 +155,8 @@ def set_alarm(user_text, state):
                         'state': json.dumps({'mode': 'alarm',
                                              'alarm_time': alarm_time})}
         elif 'payment' in state:
-            if any(map(user_text.__contains__, SUPPORTED_PAYMENT_METHODS)):
-                invoice_number = add_to_invoice(session_id, 'alarm', payment_method=user_text)
+            if any(map(user_text.__contains__, SUPPORTED_PAYMENT_TYPES)):
+                invoice_number = add_to_invoice(session_id, 'alarm', payment_type=user_text)
                 logger.info(f"Added alarm to invoice. Session_id {session_id}")
 
                 return {'response': f'Perfect. Thank you very much. Your invoice number is: {invoice_number}',
