@@ -4,7 +4,10 @@ from psycopg2 import sql
 import logging
 import sys
 
-# TODO Add try except around all db handlers
+"""
+Helper functions for communication with the invoice app database.
+"""
+
 
 CONNECTION_STRING = f"dbname='invoice' user='ringring' host='{os.environ['PGHOST']}' password={os.environ['PGPASSWORD']}"
 

@@ -1,9 +1,22 @@
 from flask import request
 import functools
 import logging
+import json
 
 
 def debug(_func=None, *, _debug=False, _args_kwargs=True, _returned_value=True, logger=logging.getLogger()):
+    """
+    Decorator that logs function signature and return values.
+    Not used. The initial idea was to use this decorator to change the global log level based on fraudulous user
+    input and thereby omitting sensitive data.
+
+    :param _func:
+    :param _debug:
+    :param _args_kwargs:
+    :param _returned_value:
+    :param logger:
+    :return:
+    """
     def decorator_debug(func):
         @functools.wraps(func)
         def wrapper_debug(*args, **kwargs):
@@ -34,3 +47,6 @@ def debug(_func=None, *, _debug=False, _args_kwargs=True, _returned_value=True, 
         return decorator_debug(_func)
 
 
+def check_session_id(session_id):
+    if not session_id:
+        return json.dumps({'error': 'could not find session_id in your cookies'}), 400

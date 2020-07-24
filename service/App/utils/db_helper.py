@@ -1,7 +1,10 @@
 import psycopg2
 import os
 from psycopg2 import sql
-# TODO Add try except around all db handlers
+
+"""
+Helper functions for communication with the main app database.
+"""
 
 CONNECTION_STRING = f"dbname='service' user='ringring' host='{os.environ['PGHOST']}' password={os.environ['PGPASSWORD']}"
 

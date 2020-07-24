@@ -7,7 +7,6 @@ import secrets
 import yaml
 import json
 import sys
-from werkzeug.serving import WSGIRequestHandler
 from utils import invoice_db_helper
 import datetime
 
@@ -25,10 +24,17 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 class InvoiceFilter:
     def __init__(self, payment_type, invoice_status):
+        """
+        Custom logging filter.
+
+        :param payment_type:
+        :param invoice_status:
+        """
         self.payment_type = payment_type
         self.invoice_status = invoice_status
 
-    def get_invoice_status(self, payment_type):
+    @staticmethod
+    def get_invoice_status(payment_type):
         if payment_type == 'cash' or payment_type == 'debit':
             return 'settled'
         else:
@@ -40,6 +46,11 @@ class InvoiceFilter:
 
 @app.route('/')
 def home():
+    """
+    Main entry point for the invoice app. Returns all invoices for a specific guest.
+
+    :return:
+    """
     guest_name = request.args.get('name')
     if not guest_name:
         return param_error('guest_name')
@@ -56,6 +67,11 @@ def home():
 
 @app.route('/add', methods=['POST'])
 def add_to_bill():
+    """
+    Endpoint to add an item to the invoice. Adds it both to the db as well as to the logfile.
+
+    :return:
+    """
     guest_name = request.form.get('name')
     if not guest_name:
         return param_error('name')
@@ -95,6 +111,11 @@ def add_to_bill():
 
 @app.route('/storno', methods=['POST'])
 def storno():
+    """
+    Endpoint to delete an invoice from the db. Invoice will remain in the logfile.
+
+    :return:
+    """
     invoice_number = request.form.get('number')
     if not invoice_number:
         return param_error('number')
@@ -109,6 +130,10 @@ def storno():
 
 @app.route('/request-bill')
 def request_bill():
+    """
+    Requesting the bill for a guest and marking respective invoices as payed.
+    :return:
+    """
     guest_name = request.args.get('name')
     if not guest_name:
         return param_error('name')
@@ -126,6 +151,10 @@ def request_bill():
 
 @app.route('/invoice_details')
 def invoice_details():
+    """
+    Return full invoice details for an invoice number. Needs both the invoice number and the guest name.
+    :return:
+    """
     invoice_number = request.args.get('invoice_number')
     if not invoice_number:
         return param_error('invoice_number')
@@ -168,6 +197,12 @@ def get_invoice_number():
 
 
 def get_invoice_controller(payment_type=PAYMENT_ON_ACCOUNT, log_level='ACCOUNT'):
+    """
+    Helper function to return the correct logger.
+    :param payment_type:
+    :param log_level:
+    :return:
+    """
     with open('logger-config.yml', 'r') as yaml_file:
         config = yaml_file.read().format(payment_type=payment_type, level=log_level)
         config = yaml.load(config, Loader=yaml.Loader)
@@ -189,9 +224,14 @@ def start_app(host):
 
 
 def param_error(name):
+    """
+    Helper function for error handling on request parameters.
+
+    :param name:
+    :return:
+    """
     return jsonify(success=False, message=f"missing parameter {name}"), 400
 
 
 if __name__ == '__main__':
-    WSGIRequestHandler.protocol_version = "HTTP/1.1"
     start_app(host='0.0.0.0')

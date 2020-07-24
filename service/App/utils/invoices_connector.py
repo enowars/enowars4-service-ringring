@@ -3,6 +3,11 @@ import requests
 import hashlib
 import os
 
+"""
+Helper functions for communication with the invoice service.
+"""
+
+
 PAYMENT_ON_ACCOUNT = 'room-bill'
 
 logger = logging.getLogger('RingRing')

@@ -2,14 +2,13 @@ from flask import Flask, render_template, request, make_response
 import re
 import datetime
 import logging
-from utils import debug, db_helper
+from utils import debug, db_helper, check_session_id
 from utils.invoices_connector import add_to_invoice, get_invoices, request_bill, get_invoice_by_invoice_number
 import json
 import uuid
 from flask_table import Table, Col
 import ast
 import sys
-from werkzeug.serving import WSGIRequestHandler
 
 app = Flask(__name__)
 
@@ -19,13 +18,13 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 AVAILABLE_FOOD = ['pizza', 'bread', 'fish']
 SUPPORTED_PAYMENT_TYPES = ['cash', 'room-bill']
 
-# handler = logging.FileHandler(os.environ['LOGDIR'])
-# formatter = logging.Formatter("%(name)s - %(levelname)s - %(levelno)s - %(message)s")
-# handler.setFormatter(formatter)
-# logger.addHandler(handler)
 
 @app.route('/')
 def home():
+    """
+    home directory. Used to set the session id and to render the main page.
+    :return:
+    """
     response = make_response(render_template('home.html'))
 
     if not request.cookies.get('session_id'):
@@ -39,6 +38,11 @@ def home():
 
 @app.route('/get_bot_response')
 def get_bot_response():
+    """
+    Main Endpoint for chat bot communication. Handles the user input and calls respective methods.
+    The state and mode parameters are used to track the current status between the front end and the back end.
+    :return:
+    """
     user_text = request.args.get('msg')
     state = request.args.get('state')
     if state:
@@ -62,7 +66,6 @@ def get_bot_response():
         return get_invoice_info(user_text, state)
 
     else:
-        # logger.debug('Something very secret.')
         return {'response': '''I have no service registered to that request. These are the services that I can provide: <br>
         - set an alarm <br>
         - order food <br>
@@ -73,6 +76,11 @@ def get_bot_response():
 
 @app.route('/alarm', methods=['GET'])
 def alarm():
+    """
+    Overview over all alarms for a specific session_id
+    :return:
+    """
+
     class ItemTable(Table):
         time = Col('time')
         text = Col('text')
@@ -86,6 +94,10 @@ def alarm():
 
 @app.route('/invoices', methods=['GET'])
 def invoices():
+    """
+    Overview over all invoices for a specific session_id. Invoice message is not provided here.
+    :return:
+    """
     guest_name = request.cookies.get('session_id')
     check_session_id(guest_name)
 
@@ -102,6 +114,11 @@ def invoices():
 
 @app.route('/guests', methods=['GET'])
 def guests():
+    """
+    Overview over all non_vip guests.
+    :return:
+    """
+
     class ItemTable(Table):
         guest_id = Col('Guest ID')
 
@@ -115,6 +132,11 @@ def guests():
 
 @app.route('/make_me_a_vip', methods=['POST'])
 def make_me_a_vip():
+    """
+    Endpoint to make a specific session vip.
+    The recalc parameter can be used to change the database restrictions on whether a vip can be billable or not.
+    :return:
+    """
     session_id = request.cookies.get('session_id')
     check_session_id(session_id)
 
@@ -136,6 +158,12 @@ def make_me_a_vip():
 
 @debug(logger=logger, _debug=False)
 def set_alarm(user_text, state):
+    """
+    Bot workflow function to set the alarm.
+    :param user_text:
+    :param state:
+    :return:
+    """
     session_id = request.cookies.get('session_id')
     check_session_id(session_id)
 
@@ -182,6 +210,12 @@ def set_alarm(user_text, state):
 
 
 def make_invoice(user_text, state):
+    """
+    Bot Workflow function to make an invoice
+    :param user_text:
+    :param state:
+    :return:
+    """
     session_id = request.cookies.get('session_id')
     check_session_id(session_id)
 
@@ -210,6 +244,12 @@ def make_invoice(user_text, state):
 
 
 def order_food(user_text, state):
+    """
+    Bot workflow function to order food.
+    :param user_text:
+    :param state:
+    :return:
+    """
     session_id = request.cookies.get('session_id')
     check_session_id(session_id)
 
@@ -243,6 +283,12 @@ def order_food(user_text, state):
 
 
 def get_invoice_info(user_text, state):
+    """
+    Bot workflow function to get invoice information on an invoice number.
+    :param user_text:
+    :param state:
+    :return:
+    """
     session_id = request.cookies.get('session_id')
     check_session_id(session_id)
 
@@ -262,11 +308,5 @@ def get_invoice_info(user_text, state):
                 'state': json.dumps({'mode': 'invoice_info'})}
 
 
-def check_session_id(session_id):
-    if not session_id:
-        return json.dumps({'error': 'could not find session_id in your cookies'}), 400
-
-
 if __name__ == '__main__':
-    WSGIRequestHandler.protocol_version = "HTTP/1.1"
     app.run(port=7353, host='0.0.0.0')
