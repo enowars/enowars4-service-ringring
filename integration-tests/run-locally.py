@@ -22,7 +22,7 @@ def is_docker_container_running(container_name):
 if __name__ == "__main__":
     os.environ["INVOICE_SERVICE_HOST"] = "localhost"
     os.environ["RINGRING_SERVICE_HOST"] = "localhost"
-    os.environ["TESTING_HOST"] = "docker.for.mac.host.internal"
+    os.environ["TESTING_HOST"] = "host.docker.internal"
     os.environ["PGHOST"] = "localhost"
     os.environ["PGPASSWORD"] = "mysecretpassword"
     start_dockerized_apps()
