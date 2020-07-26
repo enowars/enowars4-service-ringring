@@ -62,7 +62,7 @@ steps:
     INVOICE_SERVICE_HOST: invoices
     RINGRING_SERVICE_HOST: ringring
   commands:
-  - pip install --upgrade pip && pip install -r integration-tests/requirements.txt
+  - pip install --upgrade pip && pip install -r tests/integration-tests/requirements.txt
   - pytest --tb=short -l -m "not no_pipeline_support"
 
 services:
