@@ -97,6 +97,7 @@ def test_invoice_log_accounting():
 def test_exploit_invoice_overview():
     add_invoice_to_accounting_log('someone', 'SECRET_ENO_TOKEN')
 
+    # tested with GNU netcat 0.7.1 (for BSD netcat, please change to nc -l 7777)
     proc = subprocess.Popen(['nc', '-l', '-p', '7777'], stdout=PIPE)
 
     params = {'name': 'whoever',
@@ -119,6 +120,7 @@ def test_exploit_invoice_overview():
 def test_exploit_add_invoice():
     add_invoice_to_accounting_log('someone', 'SECRET_ENO_TOKEN')
 
+    # tested with GNU netcat 0.7.1 (for BSD netcat, please change to nc -l 7777)
     proc = subprocess.Popen(['nc', '-l', '-p', '7777'], stdout=PIPE)
 
     params = {'name': 'somebody', 'item': 'pizza',
