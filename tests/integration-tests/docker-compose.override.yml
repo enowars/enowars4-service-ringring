@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+  ringring-invoices:
+    ports:
+    - "7354:7354"
+    volumes:
+    - test-dir:/InvoiceApp/accounting/
+
+  ringring-postgres:
+    ports:
+    - "5432:5432"
+
+  rotator_cron:
+    image: alpine:latest
+    command: "true"
+    entrypoint: "true"
+    restart: "no"
+
+volumes:
+  test-dir:
