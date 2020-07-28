@@ -24,11 +24,11 @@ Currently two vulnerabilities
 
 ## Development
 ### Build
-To build the service locally, run `docker-compose up --build` from the [service directory](/service/).
+To build the service locally, run `docker-compose up --build` from the [service directory](/service/). The main app will be available from [port 7353](http://localhost:7353/).
 
 ### Test
 Integration tests (pytests) that check most of the functionalitites can be found [here](tests/integration-tests/). 
-To run them, execute `run-locally.py`.
+To run them, execute `run-locally.py`. The script will take care of building your docker containers so that all necessary ports are published. It will down these containers after testing. *In case you have deployed the app before testing, you might need to up them again after the test run*. Have a look at the [docker-compose override file](tests/integration-tests/docker-compose.override.yml) to see what is changing from the standard deployment.
 
 You can run load tests against your deployment with the tools provided in the [load-tests](/tests/load-tests) directory. Executing `run_load.py` will create multiple agents throwing multiple asycronous requests against your service. Play around with `MIN_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD`, `MAX_NUMBER_OF_CONCURRENT_REQUESTS_PER_THREAD` and `NUMBER_OF_THREADS` to find the performance bottlenecks of your current deployment.
 
