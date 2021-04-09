@@ -2,7 +2,9 @@ import enochecker
 import random
 import json
 from requests import exceptions
+
 import re
+import hashlib
 
 AVAILABLE_FOOD = ['pizza', 'bred', 'fish']
 
@@ -53,8 +55,11 @@ class RingRingChecker(enochecker.BaseChecker):
         else:
             self.check_invoice_number(db_row[1], db_row[0], self.flag)
 
+    def noise_key(self):
+        return hashlib.sha256(f"jdaiwdjajwiodj_ringring_{self.flag_round}_{self.flag_idx}".encode()).hexdigest()
+
     def putnoise(self):
-        self.logger.debug(f"Putting Noise {self.noise} ...")
+        self.logger.debug(f"Putting Noise {self.noise_key()} ...")
         session_id = self.init_user()
 
         try:
@@ -63,7 +68,7 @@ class RingRingChecker(enochecker.BaseChecker):
             raise enochecker.BrokenServiceException("session_id could not be set.")
 
         if self.flag_idx % 2 == 0:
-            payload = {'msg': self.noise, 'state': json.dumps(
+            payload = {'msg': self.noise_key(), 'state': json.dumps(
                 {'mode': 'alarm', 'alarm_time': f"{random.randint(0, 23)}:{random.randint(0, 59)}"})}
 
             self.call_bot_response(payload, mode='alarm noise')
@@ -71,10 +76,10 @@ class RingRingChecker(enochecker.BaseChecker):
             payment_payload = {'state': json.dumps({'mode': 'alarm', 'payment': 'pending'}),
                                'msg': random.choice(['room-bill', 'cash'])}
             self.call_bot_response(payment_payload, mode='alarm noise payment')
-            self.team_db[self.noise] = (session_id,)
+            self.team_db[self.noise_key()] = (session_id,)
 
         else:
-            payload = {'msg': self.noise,
+            payload = {'msg': self.noise_key(),
                        'state': json.dumps(
                            {'mode': 'food_order', 'order_step': '2', 'order': random.choice(AVAILABLE_FOOD)})}
             message = self.call_bot_response(payload, mode='invoice noise')
@@ -83,19 +88,19 @@ class RingRingChecker(enochecker.BaseChecker):
                 return enochecker.Result.MUMBLE
             else:
                 invoice_number = invoice_number[0]
-            self.team_db[self.noise] = (session_id, invoice_number)
+            self.team_db[self.noise_key()] = (session_id, invoice_number)
 
     def getnoise(self):
         try:
-            db_row = self.team_db[self.noise]
+            db_row = self.team_db[self.noise_key()]
             self.logger.debug(f"Getting noise for session_id {db_row[0]}")
         except KeyError:
             return enochecker.Result.MUMBLE
 
         if self.flag_idx % 2 == 0:
-            self.check_alarm(self.noise, db_row[0])
+            self.check_alarm(self.noise_key(), db_row[0])
         else:
-            self.check_invoice_number(db_row[1], db_row[0], self.noise)
+            self.check_invoice_number(db_row[1], db_row[0], self.noise_key())
 
     def havoc(self):
         pass
